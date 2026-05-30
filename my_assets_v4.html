@@ -20,6 +20,7 @@
         .group-content { max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease-out; }
         .group-content.collapsed { max-height: 0; }
         .snapshot-item.selected { background-color: #eff6ff; border-color: #3b82f6; }
+        .stats-bar { height: 6px; border-radius: 3px; transition: width 0.3s; min-width: 2px; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -187,6 +188,56 @@
             </div>
             <div id="logListContainer" class="space-y-4"></div>
         </div>
+
+        <!-- 页面三：收支统计 -->
+        <div id="page-stats" class="p-4 hidden animate-slide">
+            <header class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">收支统计</h1>
+            </header>
+            <div class="bg-white rounded-2xl p-4 mb-4 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div class="flex gap-1 bg-gray-100 rounded-lg p-1">
+                        <button onclick="switchStatsView('month')" id="stats-view-month" class="px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium">按月</button>
+                        <button onclick="switchStatsView('week')" id="stats-view-week" class="px-3 py-1 text-xs rounded-md text-gray-400">按周</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="navigateStats(-1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 text-sm font-bold">‹</button>
+                        <span id="statsPeriod" class="text-sm font-bold text-gray-700 w-24 text-center"></span>
+                        <button onclick="navigateStats(1)" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 text-sm font-bold">›</button>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                    <div class="text-xs text-gray-400 mb-1">总收入</div>
+                    <div id="statsIncome" class="text-lg font-bold text-green-600">0.00</div>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                    <div class="text-xs text-gray-400 mb-1">总支出</div>
+                    <div id="statsExpense" class="text-lg font-bold text-red-500">0.00</div>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                    <div class="text-xs text-gray-400 mb-1">净结余</div>
+                    <div id="statsNet" class="text-lg font-bold text-indigo-600">0.00</div>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div class="bg-white rounded-xl p-4 shadow-sm">
+                    <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-red-500 rounded-full inline-block"></span>
+                        支出分类
+                    </h3>
+                    <div id="statsExpenseCategories" class="space-y-3"></div>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm">
+                    <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
+                        收入分类
+                    </h3>
+                    <div id="statsIncomeCategories" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- 快照回顾弹窗 -->
@@ -214,6 +265,10 @@
             <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
             <span class="text-[10px] font-bold">收支记事</span>
         </button>
+        <button onclick="switchTab('stats')" id="tab-stats" class="flex flex-col items-center text-gray-300">
+            <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M3 14l4-4 4 4 6-6 4 4V4H3v10zm-2 4h22v2H1v-2z"/></svg>
+            <span class="text-[10px] font-bold">收支统计</span>
+        </button>
     </nav>
 
     <script>
@@ -226,6 +281,7 @@
         let viewMode = localStorage.getItem(KEY_VIEW) || 'month';
         let selectedSnapshots = [];
         let snapshotViewMode = 'data';
+        let statsMode = 'month', statsOffset = 0;
 
         function formatMoney(num) {
             return new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
@@ -746,9 +802,94 @@
         function switchTab(tab) {
             document.getElementById('page-assets').classList.toggle('hidden', tab !== 'assets');
             document.getElementById('page-ledger').classList.toggle('hidden', tab !== 'ledger');
+            document.getElementById('page-stats').classList.toggle('hidden', tab !== 'stats');
             document.getElementById('tab-assets').className = tab === 'assets' ? 'flex flex-col items-center active-tab' : 'flex flex-col items-center text-gray-300';
             document.getElementById('tab-ledger').className = tab === 'ledger' ? 'flex flex-col items-center active-tab' : 'flex flex-col items-center text-gray-300';
+            document.getElementById('tab-stats').className = tab === 'stats' ? 'flex flex-col items-center active-tab' : 'flex flex-col items-center text-gray-300';
             if(tab === 'ledger') { renderLedger(); calculateLedgerTotal(); }
+            if(tab === 'stats') renderStats();
+        }
+
+        function getCategoryColor(cat) {
+            return { '德州扑克':'#ef4444','数字服务':'#3b82f6','差旅交通':'#eab308','生活购物':'#22c55e','德州收入':'#ef4444','初始资金':'#f59e0b' }[cat] || '#9ca3af';
+        }
+
+        function switchStatsView(mode) {
+            statsMode = mode; statsOffset = 0;
+            document.getElementById('stats-view-month').className = mode === 'month' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
+            document.getElementById('stats-view-week').className = mode === 'week' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
+            renderStats();
+        }
+
+        function navigateStats(delta) { statsOffset += delta; renderStats(); }
+
+        function getStatsPeriodLabel() {
+            const now = new Date();
+            if (statsMode === 'month') {
+                const d = new Date(now.getFullYear(), now.getMonth() + statsOffset, 1);
+                return d.getFullYear() + '年' + (d.getMonth() + 1) + '月';
+            }
+            const d = new Date(now);
+            d.setDate(d.getDate() + statsOffset * 7);
+            return formatWeekRange(getWeekKeyFromDate(d));
+        }
+
+        function getWeekKeyFromDate(date) {
+            const d = new Date(date); d.setHours(0, 0, 0, 0);
+            const day = d.getDay(), diff = day === 0 ? -6 : 1 - day;
+            d.setDate(d.getDate() + diff);
+            return d.toISOString().substring(0, 10);
+        }
+
+        function logsForStatsPeriod() {
+            const now = new Date();
+            let start, end;
+            if (statsMode === 'month') {
+                start = new Date(now.getFullYear(), now.getMonth() + statsOffset, 1);
+                end = new Date(now.getFullYear(), now.getMonth() + statsOffset + 1, 1);
+            } else {
+                const d = new Date(now); d.setDate(d.getDate() + statsOffset * 7);
+                const wkStart = new Date(getWeekKeyFromDate(d));
+                start = wkStart; end = new Date(wkStart); end.setDate(end.getDate() + 7);
+            }
+            return logData.filter(item => item.date && new Date(item.date) >= start && new Date(item.date) < end);
+        }
+
+        function renderStats() {
+            const logs = logsForStatsPeriod();
+            document.getElementById('statsPeriod').textContent = getStatsPeriodLabel();
+            let totalIncome = 0, totalExpense = 0;
+            const expenseCat = {}, incomeCat = {};
+            logs.forEach(item => {
+                const cat = item.category || '其他';
+                if (item.amount >= 0) { totalIncome += item.amount; incomeCat[cat] = (incomeCat[cat] || 0) + item.amount; }
+                else { const a = Math.abs(item.amount); totalExpense += a; expenseCat[cat] = (expenseCat[cat] || 0) + a; }
+            });
+            document.getElementById('statsIncome').textContent = formatMoney(totalIncome);
+            document.getElementById('statsExpense').textContent = formatMoney(totalExpense);
+            const net = totalIncome - totalExpense;
+            const netEl = document.getElementById('statsNet');
+            netEl.textContent = (net >= 0 ? '+' : '') + formatMoney(net);
+            netEl.className = 'text-lg font-bold ' + (net >= 0 ? 'text-green-600' : 'text-red-500');
+            renderCatBreakdown('statsExpenseCategories', expenseCat, totalExpense);
+            renderCatBreakdown('statsIncomeCategories', incomeCat, totalIncome);
+        }
+
+        function renderCatBreakdown(id, catMap, total) {
+            const el = document.getElementById(id);
+            const entries = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
+            if (!entries.length) { el.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">暂无记录</div>'; return; }
+            const maxVal = entries[0][1];
+            el.innerHTML = entries.map(([cat, val]) => {
+                const pct = total > 0 ? (val / total * 100) : 0;
+                const barW = maxVal > 0 ? (val / maxVal * 100) : 0;
+                return '<div class="flex items-center">' +
+                    '<span class="text-xs w-20 flex-shrink-0 text-gray-600 truncate">' + cat + '</span>' +
+                    '<div class="flex-1 mx-2"><div class="bg-gray-100 rounded-full h-2">' +
+                    '<div class="stats-bar" style="width:' + barW + '%;background:' + getCategoryColor(cat) + '"></div></div></div>' +
+                    '<span class="text-xs font-mono text-gray-700 w-24 text-right">' + formatMoney(val) + '</span>' +
+                    '<span class="text-[10px] text-gray-400 w-8 text-right">' + pct.toFixed(0) + '%</span></div>';
+            }).join('');
         }
 
         function resetAssets() { if(confirm('确定清空填报数据？')) { localStorage.removeItem(KEY_ASSETS); location.reload(); } }
