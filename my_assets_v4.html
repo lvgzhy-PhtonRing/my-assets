@@ -207,34 +207,62 @@
                     </div>
                 </div>
             </div>
-            <div class="grid grid-cols-3 gap-3 mb-6">
-                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
-                    <div class="text-xs text-gray-400 mb-1">总收入</div>
-                    <div id="statsIncome" class="text-lg font-bold text-green-600">0.00</div>
+            <div class="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
+                <button onclick="switchStatsType('category')" id="stats-type-category" class="flex-1 py-2 text-xs rounded-md bg-white shadow text-indigo-600 font-medium">📊 分类统计</button>
+                <button onclick="switchStatsType('dezhoU')" id="stats-type-dezhou" class="flex-1 py-2 text-xs rounded-md text-gray-400">🃏 德州汇总</button>
+            </div>
+            <!-- 分类统计视图 -->
+            <div id="statsCategoryView">
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                        <div class="text-xs text-gray-400 mb-1">总收入</div>
+                        <div id="statsIncome" class="text-lg font-bold text-green-600">0.00</div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                        <div class="text-xs text-gray-400 mb-1">总支出</div>
+                        <div id="statsExpense" class="text-lg font-bold text-red-500">0.00</div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                        <div class="text-xs text-gray-400 mb-1">净结余</div>
+                        <div id="statsNet" class="text-lg font-bold text-indigo-600">0.00</div>
+                    </div>
                 </div>
-                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
-                    <div class="text-xs text-gray-400 mb-1">总支出</div>
-                    <div id="statsExpense" class="text-lg font-bold text-red-500">0.00</div>
-                </div>
-                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
-                    <div class="text-xs text-gray-400 mb-1">净结余</div>
-                    <div id="statsNet" class="text-lg font-bold text-indigo-600">0.00</div>
+                <div class="space-y-4">
+                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                        <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                            <span class="w-2 h-2 bg-red-500 rounded-full inline-block"></span>
+                            支出分类
+                        </h3>
+                        <div id="statsExpenseCategories" class="space-y-3"></div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                        <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                            <span class="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
+                            收入分类
+                        </h3>
+                        <div id="statsIncomeCategories" class="space-y-3"></div>
+                    </div>
                 </div>
             </div>
-            <div class="space-y-4">
-                <div class="bg-white rounded-xl p-4 shadow-sm">
-                    <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                        <span class="w-2 h-2 bg-red-500 rounded-full inline-block"></span>
-                        支出分类
-                    </h3>
-                    <div id="statsExpenseCategories" class="space-y-3"></div>
+            <!-- 德州汇总视图 -->
+            <div id="dezhoUView" class="hidden">
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                        <div class="text-xs text-gray-400 mb-1">德州入账</div>
+                        <div id="dzIncome" class="text-lg font-bold text-green-600">0.00</div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                        <div class="text-xs text-gray-400 mb-1">德州出账</div>
+                        <div id="dzExpense" class="text-lg font-bold text-red-500">0.00</div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm text-center">
+                        <div class="text-xs text-gray-400 mb-1">德州净盈亏</div>
+                        <div id="dzNet" class="text-lg font-bold text-indigo-600">0.00</div>
+                    </div>
                 </div>
                 <div class="bg-white rounded-xl p-4 shadow-sm">
-                    <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                        <span class="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
-                        收入分类
-                    </h3>
-                    <div id="statsIncomeCategories" class="space-y-3"></div>
+                    <h3 class="text-sm font-bold text-gray-700 mb-3">各期趋势</h3>
+                    <div id="dezhoUTrend" class="space-y-2"></div>
                 </div>
             </div>
         </div>
@@ -281,7 +309,7 @@
         let viewMode = localStorage.getItem(KEY_VIEW) || 'month';
         let selectedSnapshots = [];
         let snapshotViewMode = 'data';
-        let statsMode = 'month', statsOffset = 0;
+        let statsMode = 'month', statsOffset = 0, statsType = 'category';
 
         function formatMoney(num) {
             return new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
@@ -823,6 +851,15 @@
 
         function navigateStats(delta) { statsOffset += delta; renderStats(); }
 
+        function switchStatsType(type) {
+            statsType = type;
+            document.getElementById('stats-type-category').className = type === 'category' ? 'flex-1 py-2 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'flex-1 py-2 text-xs rounded-md text-gray-400';
+            document.getElementById('stats-type-dezhou').className = type === 'dezhoU' ? 'flex-1 py-2 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'flex-1 py-2 text-xs rounded-md text-gray-400';
+            document.getElementById('statsCategoryView').classList.toggle('hidden', type !== 'category');
+            document.getElementById('dezhoUView').classList.toggle('hidden', type !== 'dezhoU');
+            renderStats();
+        }
+
         function getStatsPeriodLabel() {
             const now = new Date();
             if (statsMode === 'month') {
@@ -856,8 +893,9 @@
         }
 
         function renderStats() {
-            const logs = logsForStatsPeriod();
             document.getElementById('statsPeriod').textContent = getStatsPeriodLabel();
+            if (statsType === 'dezhoU') { renderDezhouSummary(); return; }
+            const logs = logsForStatsPeriod();
             let totalIncome = 0, totalExpense = 0;
             const expenseCat = {}, incomeCat = {};
             logs.forEach(item => {
@@ -873,6 +911,55 @@
             netEl.className = 'text-lg font-bold ' + (net >= 0 ? 'text-green-600' : 'text-red-500');
             renderCatBreakdown('statsExpenseCategories', expenseCat, totalExpense);
             renderCatBreakdown('statsIncomeCategories', incomeCat, totalIncome);
+        }
+
+        function renderDezhouSummary() {
+            const logs = logsForStatsPeriod();
+            let dzIn = 0, dzOut = 0;
+            logs.forEach(item => {
+                const cat = item.category || '';
+                if (cat === '德州入账') dzIn += item.amount;
+                if (cat === '德州出账') dzOut += Math.abs(item.amount);
+            });
+            document.getElementById('dzIncome').textContent = formatMoney(dzIn);
+            document.getElementById('dzExpense').textContent = formatMoney(dzOut);
+            const net = dzIn - dzOut;
+            const netEl = document.getElementById('dzNet');
+            netEl.textContent = (net >= 0 ? '+' : '') + formatMoney(net);
+            netEl.className = 'text-lg font-bold ' + (net >= 0 ? 'text-green-600' : 'text-red-500');
+            // 各期趋势
+            const periodMap = {};
+            logData.forEach(item => {
+                const cat = item.category || '';
+                if (cat !== '德州入账' && cat !== '德州出账') return;
+                if (!item.date) return;
+                const key = statsMode === 'month' ? item.date.substring(0, 7) : getWeekKey(item.date);
+                if (!periodMap[key]) periodMap[key] = { label: key, income: 0, expense: 0 };
+                if (item.amount >= 0) periodMap[key].income += item.amount;
+                else periodMap[key].expense += Math.abs(item.amount);
+            });
+            const sorted = Object.keys(periodMap).sort().reverse();
+            const trendEl = document.getElementById('dezhoUTrend');
+            if (!sorted.length) { trendEl.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">暂无德州记录</div>'; return; }
+            const maxTotal = Math.max(...sorted.map(k => periodMap[k].income + periodMap[k].expense), 1);
+            trendEl.innerHTML = sorted.map(key => {
+                const p = periodMap[key];
+                const label = statsMode === 'month' ? key.replace('-', '年') + '月' : formatWeekRange(key);
+                const periodNet = p.income - p.expense;
+                const totalW = (p.income + p.expense) / maxTotal * 100;
+                const inW = totalW > 0 ? (p.income / (p.income + p.expense)) * 100 : 0;
+                return '<div class="bg-gray-50 rounded-lg p-3">' +
+                    '<div class="flex justify-between items-center mb-1">' +
+                    '<span class="text-xs font-medium text-gray-700">' + label + '</span>' +
+                    '<span class="text-xs font-mono ' + (periodNet >= 0 ? 'text-green-600' : 'text-red-500') + ' font-bold">' +
+                    (periodNet >= 0 ? '+' : '') + formatMoney(periodNet) + '</span></div>' +
+                    '<div class="h-3 bg-gray-200 rounded-full overflow-hidden flex flex-row-reverse">' +
+                    '<div style="width:' + inW + '%;background:#22c55e;height:100%"></div>' +
+                    '<div style="width:' + (100 - inW) + '%;background:#ef4444;height:100%"></div></div>' +
+                    '<div class="flex justify-between text-[10px] text-gray-400 mt-0.5">' +
+                    '<span>入 ' + formatMoney(p.income) + '</span>' +
+                    '<span>出 ' + formatMoney(p.expense) + '</span></div></div>';
+            }).join('');
         }
 
         function renderCatBreakdown(id, catMap, total) {
