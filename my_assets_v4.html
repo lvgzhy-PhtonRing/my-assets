@@ -162,7 +162,7 @@
                         </label>
                     </div>
                     <select id="log_category" class="w-full bg-gray-50 rounded-xl px-3 py-2.5 outline-none text-sm">
-                        <option value="德州扑克">🃏 德州扑克</option>
+                        <option value="德州出账">🃏 德州出账</option>
                         <option value="数字服务">🤖 数字服务</option>
                         <option value="差旅交通">🚗 差旅交通</option>
                         <option value="生活购物">🛒 生活购物</option>
@@ -289,11 +289,11 @@
 
         function getCategoryBadge(cat) {
             const map = {
-                '德州扑克': 'bg-red-100 text-red-700',
+                '德州出账': 'bg-red-100 text-red-700',
                 '数字服务': 'bg-blue-100 text-blue-700',
                 '差旅交通': 'bg-yellow-100 text-yellow-700',
                 '生活购物': 'bg-green-100 text-green-700',
-                '德州收入': 'bg-red-100 text-red-700',
+                '德州入账': 'bg-red-100 text-red-700',
                 '初始资金': 'bg-amber-100 text-amber-700',
             };
             return map[cat] || 'bg-gray-100 text-gray-600';
@@ -634,13 +634,13 @@
         function inferCategory(title, type, amount) {
             const t = title.toLowerCase();
             if (type === 'expense' || amount < 0) {
-                if (/德州/.test(t)) return '德州扑克';
+                if (/德州/.test(t)) return '德州出账';
                 if (/贞贞|^ai\b|apimart|apiqik|gaski|manus|星流|google|leonardo|apple music|apple/.test(t)) return '数字服务';
                 if (/差旅|停车|武汉|郑州/.test(t)) return '差旅交通';
                 if (/手机膜|皮蛋|斯巴鲁|翼豹|交通罚款|聚会/.test(t)) return '生活购物';
                 return '其他';
             }
-            if (/德州/.test(t) && !/起始/.test(t)) return '德州收入';
+            if (/德州/.test(t) && !/起始/.test(t)) return '德州入账';
             if (/起始值|初始/.test(t)) return '初始资金';
             return '其他';
         }
@@ -689,7 +689,7 @@
                     card.className = 'bg-red-50 rounded-2xl p-5 mb-8 shadow-sm border border-red-200';
                     amtInput.placeholder = '支出金额';
                     catSelect.innerHTML =
-                        '<option value="德州扑克">🃏 德州扑克</option>' +
+                        '<option value="德州出账">🃏 德州出账</option>' +
                         '<option value="数字服务">🤖 数字服务</option>' +
                         '<option value="差旅交通">🚗 差旅交通</option>' +
                         '<option value="生活购物">🛒 生活购物</option>' +
@@ -698,7 +698,7 @@
                     card.className = 'bg-green-50 rounded-2xl p-5 mb-8 shadow-sm border border-green-200';
                     amtInput.placeholder = '收入金额';
                     catSelect.innerHTML =
-                        '<option value="德州收入">🃏 德州收入</option>' +
+                        '<option value="德州入账">🃏 德州入账</option>' +
                         '<option value="初始资金">💰 初始资金</option>' +
                         '<option value="其他">📦 其他</option>';
                 }
@@ -811,7 +811,7 @@
         }
 
         function getCategoryColor(cat) {
-            return { '德州扑克':'#ef4444','数字服务':'#3b82f6','差旅交通':'#eab308','生活购物':'#22c55e','德州收入':'#ef4444','初始资金':'#f59e0b' }[cat] || '#9ca3af';
+            return { '德州出账':'#ef4444','数字服务':'#3b82f6','差旅交通':'#eab308','生活购物':'#22c55e','德州入账':'#ef4444','初始资金':'#f59e0b' }[cat] || '#9ca3af';
         }
 
         function switchStatsView(mode) {
