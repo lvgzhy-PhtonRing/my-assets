@@ -893,13 +893,18 @@
         }
 
         function renderStats() {
+            if (statsType === 'dezhoU') {
+                document.getElementById('statsPeriod').textContent = '全量汇总';
+                renderDezhouSummary();
+                return;
+            }
             document.getElementById('statsPeriod').textContent = getStatsPeriodLabel();
-            if (statsType === 'dezhoU') { renderDezhouSummary(); return; }
             const logs = logsForStatsPeriod();
             let totalIncome = 0, totalExpense = 0;
             const expenseCat = {}, incomeCat = {};
             logs.forEach(item => {
                 const cat = item.category || '其他';
+                if (cat === '德州入账' || cat === '德州出账') return; // 德州类别仅在德州汇总中展示
                 if (item.amount >= 0) { totalIncome += item.amount; incomeCat[cat] = (incomeCat[cat] || 0) + item.amount; }
                 else { const a = Math.abs(item.amount); totalExpense += a; expenseCat[cat] = (expenseCat[cat] || 0) + a; }
             });
@@ -914,7 +919,7 @@
         }
 
         function renderDezhouSummary() {
-            const logs = logsForStatsPeriod();
+            const logs = logData; // 全量数据汇总
             let dzIn = 0, dzOut = 0;
             logs.forEach(item => {
                 const cat = item.category || '';
