@@ -160,6 +160,13 @@
                             <div id="type-income" class="text-center py-2 rounded-xl bg-gray-50 text-gray-400 border border-gray-200 text-sm font-medium">收入</div>
                         </label>
                     </div>
+                    <select id="log_category" class="w-full bg-gray-50 rounded-xl px-3 py-2.5 outline-none text-sm">
+                        <option value="德州扑克">🃏 德州扑克</option>
+                        <option value="数字服务">🤖 数字服务</option>
+                        <option value="差旅交通">🚗 差旅交通</option>
+                        <option value="生活购物">🛒 生活购物</option>
+                        <option value="其他">📦 其他</option>
+                    </select>
                     <select id="log_account" class="w-full bg-gray-50 rounded-xl px-3 py-2.5 outline-none text-sm">
                         <option value="微信支付">微信支付</option>
                         <option value="支付宝">支付宝</option>
@@ -222,6 +229,18 @@
 
         function formatMoney(num) {
             return new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+        }
+
+        function getCategoryBadge(cat) {
+            const map = {
+                '德州扑克': 'bg-red-100 text-red-700',
+                '数字服务': 'bg-blue-100 text-blue-700',
+                '差旅交通': 'bg-yellow-100 text-yellow-700',
+                '生活购物': 'bg-green-100 text-green-700',
+                '德州收入': 'bg-red-100 text-red-700',
+                '初始资金': 'bg-amber-100 text-amber-700',
+            };
+            return map[cat] || 'bg-gray-100 text-gray-600';
         }
 
         function formatTime(timestamp) {
@@ -556,15 +575,42 @@
             input.click();
         }
 
+        function inferCategory(title, type, amount) {
+            const t = title.toLowerCase();
+            if (type === 'expense' || amount < 0) {
+                if (/德州/.test(t)) return '德州扑克';
+                if (/贞贞|^ai\b|apimart|apiqik|gaski|manus|星流|google|leonardo|apple music|apple/.test(t)) return '数字服务';
+                if (/差旅|停车|武汉|郑州/.test(t)) return '差旅交通';
+                if (/手机膜|皮蛋|斯巴鲁|翼豹|交通罚款/.test(t)) return '生活购物';
+                return '其他';
+            }
+            if (/德州/.test(t) && !/起始/.test(t)) return '德州收入';
+            if (/起始值|初始/.test(t)) return '初始资金';
+            return '其他';
+        }
+
+        function migrateOldData() {
+            let changed = false;
+            logData.forEach(item => {
+                if (!item.category) {
+                    const type = item.type || (item.amount >= 0 ? 'income' : 'expense');
+                    item.category = inferCategory(item.title, type, item.amount);
+                    changed = true;
+                }
+            });
+            if (changed) localStorage.setItem(KEY_LOGS, JSON.stringify(logData));
+        }
+
         function addLog() {
             const title = document.getElementById('log_title').value.trim();
             const account = document.getElementById('log_account').value;
             const date = document.getElementById('log_date').value;
             const amount = parseFloat(document.getElementById('log_amount').value) || 0;
             const type = document.querySelector('input[name="log_type"]:checked').value;
+            const category = document.getElementById('log_category').value;
             if (!title || amount === 0) return;
             const finalAmount = type === 'income' ? amount : -amount;
-            logData.unshift({ id: Date.now(), title, account, date, amount: finalAmount, type });
+            logData.unshift({ id: Date.now(), title, account, date, amount: finalAmount, type, category });
             localStorage.setItem(KEY_LOGS, JSON.stringify(logData));
             renderLedger();
             calculateLedgerTotal();
@@ -582,12 +628,23 @@
                     : 'text-center py-2 rounded-xl bg-gray-50 text-gray-400 border border-gray-200 text-sm font-medium';
                 const card = document.getElementById('log-card');
                 const amtInput = document.getElementById('log_amount');
+                const catSelect = document.getElementById('log_category');
                 if (this.value === 'expense') {
                     card.className = 'bg-red-50 rounded-2xl p-5 mb-8 shadow-sm border border-red-200';
                     amtInput.placeholder = '支出金额';
+                    catSelect.innerHTML =
+                        '<option value="德州扑克">🃏 德州扑克</option>' +
+                        '<option value="数字服务">🤖 数字服务</option>' +
+                        '<option value="差旅交通">🚗 差旅交通</option>' +
+                        '<option value="生活购物">🛒 生活购物</option>' +
+                        '<option value="其他">📦 其他</option>';
                 } else {
                     card.className = 'bg-green-50 rounded-2xl p-5 mb-8 shadow-sm border border-green-200';
                     amtInput.placeholder = '收入金额';
+                    catSelect.innerHTML =
+                        '<option value="德州收入">🃏 德州收入</option>' +
+                        '<option value="初始资金">💰 初始资金</option>' +
+                        '<option value="其他">📦 其他</option>';
                 }
             });
         });
@@ -654,7 +711,8 @@
                             ${groups[key].items.map(l => `
                                 <div class="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
                                     <div><div class="text-sm font-medium text-gray-700">${l.title}</div><div class="text-[10px] text-gray-400">${l.date.substring(5)} · ${l.account}</div></div>
-                                    <div class="flex items-center space-x-3">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded-full ${getCategoryBadge(l.category)}">${l.category || '其他'}</span>
                                         <span class="text-sm font-mono font-bold ${l.amount >= 0 ? 'text-green-600' : 'text-red-500'}">${l.amount > 0 ? '+' : ''}${formatMoney(l.amount)}</span>
                                         <button onclick="deleteLog(${l.id})" class="text-gray-300 hover:text-red-400">×</button>
                                     </div>
@@ -706,6 +764,7 @@
             this.value = this.value.replace(/[eE]/g, '');
         });
         loadSavedData();
+        migrateOldData();
         switchView(viewMode);
     </script>
 </body>
