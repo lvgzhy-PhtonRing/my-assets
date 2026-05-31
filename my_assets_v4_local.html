@@ -1347,75 +1347,85 @@
                 if (document.getElementById(id)) document.getElementById(id).value = demoAssets[id];
             }
 
-            // 2. 生成近3个月的示例收支记录
-            const demoLogs = [];
-            const now = new Date();
-            const rand = (min, max) => Math.round((min + Math.random() * (max - min)) * 100) / 100;
-
-            // 支出分类模板
-            const expenseTemplates = [
-                { title: '德州局', cat: '德州出账', amount: [50, 500] },
-                { title: '佳佳AI订阅', cat: '数字服务', amount: [19.9, 39.9] },
-                { title: 'Apple Music', cat: '数字服务', amount: [11, 15] },
-                { title: 'Gaski API', cat: '数字服务', amount: [30, 100] },
-                { title: '星流API充值', cat: '数字服务', amount: [50, 200] },
-                { title: '武汉差旅', cat: '差旅交通', amount: [200, 800] },
-                { title: '停车费', cat: '差旅交通', amount: [15, 45] },
-                { title: '交通卡充值', cat: '差旅交通', amount: [50, 100] },
-                { title: '超市采购', cat: '生活购物', amount: [80, 300] },
-                { title: '手机配件', cat: '生活购物', amount: [20, 100] },
-                { title: '聚餐', cat: '生活购物', amount: [100, 400] },
-                { title: '快递费', cat: '其他', amount: [8, 25] },
+            // 2. 固定测试数据（2026-03 ~ 2026-05）
+            const baseId = 1773000000000;
+            const rows = [
+                // === 2026-05 (5月) ===
+                ['2026-05-30','德州入账','微信支付',40,'income','德州入账'],
+                ['2026-05-29','聚会聚餐','支付宝',-200,'expense','生活购物'],
+                ['2026-05-29','德州入账','支付宝',139,'income','德州入账'],
+                ['2026-05-28','Apple Music','微信支付',-11,'expense','数字服务'],
+                ['2026-05-27','停车费','微信支付',-18,'expense','差旅交通'],
+                ['2026-05-25','贞贞AI充值','支付宝',-27,'expense','数字服务'],
+                ['2026-05-24','德州入账','微信支付',570.7,'income','德州入账'],
+                ['2026-05-22','德州入账','微信支付',480,'income','德州入账'],
+                ['2026-05-22','德州局','微信支付',-523,'expense','德州出账'],
+                ['2026-05-20','佳佳AI','支付宝',-19.9,'expense','数字服务'],
+                ['2026-05-19','公司报销款','支付宝',1200,'income','公款转入'],
+                ['2026-05-18','德州局','微信支付',-1156,'expense','德州出账'],
+                ['2026-05-16','超市采购','支付宝',-189.5,'expense','生活购物'],
+                ['2026-05-14','Gaski API','微信支付',-30,'expense','数字服务'],
+                ['2026-05-12','星流充值','微信支付',-99,'expense','数字服务'],
+                ['2026-05-10','快递费','支付宝',-12,'expense','其他'],
+                ['2026-05-09','德州局','微信支付',-153,'expense','德州出账'],
+                ['2026-05-09','德州入账','微信支付',92,'income','德州入账'],
+                ['2026-05-07','交通罚款','微信支付',-200,'expense','差旅交通'],
+                ['2026-05-05','德州局','微信支付',-1455.9,'expense','德州出账'],
+                ['2026-05-03','武汉差旅','支付宝',-338,'expense','差旅交通'],
+                ['2026-05-01','手机壳贴膜','支付宝',-35.8,'expense','生活购物'],
+                // === 2026-04 (4月) ===
+                ['2026-04-28','德州入账','微信支付',240,'income','德州入账'],
+                ['2026-04-26','贞贞AI月费','微信支付',-40.5,'expense','数字服务'],
+                ['2026-04-24','德州局','微信支付',-380,'expense','德州出账'],
+                ['2026-04-22','leonardo','银行卡',-84,'expense','数字服务'],
+                ['2026-04-20','帮妈妈买手机膜','微信支付',-19.89,'expense','生活购物'],
+                ['2026-04-20','德州局','微信支付',-554.5,'expense','德州出账'],
+                ['2026-04-20','Apple Music','微信支付',-11,'expense','数字服务'],
+                ['2026-04-20','Ai贞贞充值','微信支付',-67.5,'expense','数字服务'],
+                ['2026-04-20','差旅交通罚款','微信支付',-50,'expense','差旅交通'],
+                ['2026-04-20','停车费','微信支付',-9,'expense','差旅交通'],
+                ['2026-04-19','德州入账','微信支付',539,'income','德州入账'],
+                ['2026-04-17','闲鱼卖出收款','支付宝',680,'income','其他'],
+                ['2026-04-15','项目经费拨款','银行卡',3000,'income','公款转入'],
+                ['2026-04-12','德州局','微信支付',-572,'expense','德州出账'],
+                ['2026-04-11','德州入账','微信支付',724.5,'income','德州入账'],
+                ['2026-04-08','斯巴鲁翼豹','微信支付',-190,'expense','生活购物'],
+                ['2026-04-07','给皮蛋买五连包','微信支付',-86,'expense','生活购物'],
+                ['2026-04-06','德州局','微信支付',-196.5,'expense','德州出账'],
+                ['2026-04-05','德州入账','微信支付',240.5,'income','德州入账'],
+                ['2026-04-05','德州入账','微信支付',531.5,'income','德州入账'],
+                ['2026-04-03','apimart','微信支付',-70,'expense','数字服务'],
+                ['2026-04-03','贞贞ai','微信支付',-40.5,'expense','数字服务'],
+                ['2026-04-02','gaski','微信支付',-20,'expense','数字服务'],
+                ['2026-04-02','apiqik','微信支付',-100,'expense','数字服务'],
+                // === 2026-03 (3月) ===
+                ['2026-03-30','闲鱼卖出','支付宝',420,'income','其他'],
+                ['2026-03-29','德州入账','微信支付',457,'income','德州入账'],
+                ['2026-03-27','manus','微信支付',-277.75,'expense','数字服务'],
+                ['2026-03-26','郑州差旅','微信支付',-25.8,'expense','差旅交通'],
+                ['2026-03-26','Apple Music','微信支付',-11,'expense','数字服务'],
+                ['2026-03-24','德州入账','微信支付',310,'income','德州入账'],
+                ['2026-03-22','德州局','微信支付',-11.5,'expense','德州出账'],
+                ['2026-03-22','德州入账','微信支付',277,'income','德州入账'],
+                ['2026-03-20','贞贞ai','微信支付',-6.75,'expense','数字服务'],
+                ['2026-03-19','星流','微信支付',-99,'expense','数字服务'],
+                ['2026-03-17','聚会餐费','支付宝',-350,'expense','生活购物'],
+                ['2026-03-16','武汉差旅','微信支付',-110.06,'expense','差旅交通'],
+                ['2026-03-15','德州局','微信支付',-738.5,'expense','德州出账'],
+                ['2026-03-15','公款转入','银行卡',5000,'income','公款转入'],
+                ['2026-03-13','初始值','微信支付',16909.57,'income','初始资金'],
+                ['2026-03-12','毅合杰停车费','微信支付',-27,'expense','差旅交通'],
+                ['2026-03-10','google ai','银行卡',-560,'expense','数字服务'],
+                ['2026-03-10','leonardo','银行卡',-84,'expense','数字服务'],
+                ['2026-03-08','德州入账','微信支付',174,'income','德州入账'],
             ];
-            const incomeTemplates = [
-                { title: '闲鱼卖出', cat: '其他', amount: [100, 800] },
-                { title: '初始资金', cat: '初始资金', amount: [500, 2000] },
-                { title: '公司报销款', cat: '公款转入', amount: [300, 1500] },
-                { title: '项目经费', cat: '公款转入', amount: [1000, 5000] },
-            ];
 
-            for (let monthOffset = 0; monthOffset < 3; monthOffset++) {
-                const daysInMonth = new Date(now.getFullYear(), now.getMonth() - monthOffset + 1, 0).getDate();
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const date = new Date(now.getFullYear(), now.getMonth() - monthOffset, day);
-                    const dateStr = date.toISOString().substring(0, 10);
-                    if (date > now) continue;
+            let counter = 0;
+            const demoLogs = rows.map(r => ({
+                id: baseId + (counter++),
+                date: r[0], title: r[1], account: r[2], amount: r[3], type: r[4], category: r[5]
+            }));
 
-                    // 每天随机 0-3 笔支出
-                    const expenseCount = Math.random() < 0.4 ? Math.floor(Math.random() * 3) + 1 : 0;
-                    for (let e = 0; e < expenseCount; e++) {
-                        const tpl = expenseTemplates[Math.floor(Math.random() * expenseTemplates.length)];
-                        const amount = -rand(tpl.amount[0], tpl.amount[1]);
-                        demoLogs.push({
-                            id: Date.now() - monthOffset * 10000000 - day * 1000 - e,
-                            title: tpl.title,
-                            account: ['微信支付', '支付宝', '银行卡'][Math.floor(Math.random() * 3)],
-                            date: dateStr,
-                            amount,
-                            type: 'expense',
-                            category: tpl.cat
-                        });
-                    }
-
-                    // 每月偶尔有收入
-                    if (day === 15 && Math.random() < 0.6) {
-                        const tpl = incomeTemplates[Math.floor(Math.random() * incomeTemplates.length)];
-                        const amount = rand(tpl.amount[0], tpl.amount[1]);
-                        demoLogs.push({
-                            id: Date.now() - monthOffset * 10000000 - day * 1000 - 99,
-                            title: tpl.title,
-                            account: ['微信支付', '支付宝'][Math.floor(Math.random() * 2)],
-                            date: dateStr,
-                            amount,
-                            type: 'income',
-                            category: tpl.cat
-                        });
-                    }
-                }
-            }
-
-            // 按日期排序
-            demoLogs.sort((a, b) => b.id - a.id);
             logData = demoLogs;
             localStorage.setItem(KEY_LOGS, JSON.stringify(logData));
 
@@ -1429,7 +1439,7 @@
             if (document.getElementById('page-ledger').classList.contains('hidden') === false) renderLedger();
             if (document.getElementById('page-stats').classList.contains('hidden') === false) renderStats();
 
-            alert('✅ 测试数据加载完成！\n\n资产已预填约 ¥33,766\n收支记录共 ' + demoLogs.length + ' 条（近3个月，含公款转入）\n\n可切换「收支记事」「收支统计」「德州汇总」查看效果');
+            alert('✅ 测试数据加载完成！\n\n资产已预填约 ¥33,766\n收支记录共 ' + demoLogs.length + ' 条（2026-03 ~ 2026-05）\n覆盖全部分类：德州出账/入账、数字服务、差旅交通、生活购物、公款转入、初始资金\n\n可切换「收支记事」「统计报表」「德州汇总」查看效果');
         }
 
         /**
