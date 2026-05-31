@@ -9,6 +9,7 @@
         body { background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
+input.decimal-input { -moz-appearance: textfield; }
         .safe-area-inset-bottom { padding-bottom: env(safe-area-inset-bottom); }
         .active-tab { color: #3b82f6; }
         .section-card { background-color: white; border-radius: 1rem; padding: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1rem; }
@@ -41,6 +42,54 @@
         .kline-chart-info { display: flex; gap: 16px; padding: 8px 12px; background: #f9fafb; border-radius: 8px; margin-bottom: 8px; font-size: 11px; flex-wrap: wrap; }
         .kline-chart-info span { color: #6b7280; }
         .kline-chart-info b { color: #1f2937; font-weight: 600; }
+
+        /* ===== K-line fullscreen ===== */
+        .kline-fs-btn {
+            padding: 4px 12px; border-radius: 8px; font-size: 11px;
+            background: #6366f1; color: #fff; border: none; cursor: pointer;
+            transition: opacity 0.15s; white-space: nowrap;
+        }
+        .kline-fs-btn:active { opacity: 0.7; }
+        .kline-fs-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: #fff; display: none; flex-direction: column;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+        .kline-fs-overlay.open { display: flex; }
+        .kline-fs-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; border-bottom: 1px solid #e5e7eb; flex-shrink: 0;
+        }
+        .kline-fs-title { font-size: 15px; font-weight: 700; color: #1f2937; }
+        .kline-fs-close {
+            width: 32px; height: 32px; display: flex; align-items: center;
+            justify-content: center; border-radius: 50%; background: #f3f4f6;
+            border: none; cursor: pointer; font-size: 18px; color: #6b7280;
+        }
+        .kline-fs-body {
+            flex: 1; overflow: auto; -webkit-overflow-scrolling: touch;
+            display: flex; flex-direction: column; padding: 16px;
+        }
+        .kline-fs-body .kline-chart-wrap { flex: 1; min-height: 300px; }
+        .kline-fs-body .kline-chart { height: 350px; }
+        .kline-fs-body .kline-candle { width: 18px; }
+        .kline-fs-body .kline-wick { width: 3px; }
+        .kline-fs-body .kline-bar-group { width: 72px; }
+        .kline-fs-body .kline-label { font-size: 10px; max-width: 64px; }
+        .kline-fs-body .kline-vol { font-size: 10px; max-width: 64px; font-weight: 600; }
+        .kline-fs-body .kline-chart-info { font-size: 13px; padding: 12px 16px; }
+        .kline-fs-body .kline-detail {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 1px; margin-top: 2px; width: 100%;
+        }
+        .kline-fs-body .kline-detail-income {
+            font-size: 8px; color: #ef4444; line-height: 1.2;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 64px;
+        }
+        .kline-fs-body .kline-detail-expense {
+            font-size: 8px; color: #22c55e; line-height: 1.2;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 64px;
+        }
 
         /* ===== Category detail panel ===== */
         .cat-detail-item { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
@@ -81,7 +130,7 @@
 <body class="bg-gray-50 min-h-screen">
 
     <!-- 版本标识 -->
-    <div class="version-badge" title="数据仅存储在浏览器 localStorage">v0.21</div>
+    <div class="version-badge" title="数据仅存储在浏览器 localStorage">v0.22</div>
 
     <main class="pb-24">
         <!-- ========== 页面一：资产概览 ========== -->
@@ -111,16 +160,16 @@
                     <div class="space-y-4">
                         <div>
                             <label class="text-[10px] text-gray-400">零钱</label>
-                            <input type="number" data-group="wx" data-type="asset" id="wx_lq" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent focus:border-green-300 text-sm">
+                            <input type="text" data-group="wx" data-type="asset" id="wx_lq" placeholder="0.00" inputmode="decimal" step="0.01" max="99999.99" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent focus:border-green-300 text-sm decimal-input">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="text-[10px] text-gray-400">零钱通</label>
-                                <input type="number" data-group="wx" data-type="asset" id="wx_lqt" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm">
+                                <input type="text" data-group="wx" data-type="asset" id="wx_lqt" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
                             </div>
                             <div>
                                 <label class="text-[10px] text-gray-400">理财通</label>
-                                <input type="number" data-group="wx" data-type="asset" id="wx_lct" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm">
+                                <input type="text" data-group="wx" data-type="asset" id="wx_lct" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
                             </div>
                         </div>
                     </div>
@@ -133,19 +182,19 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="text-[10px] text-gray-400">余额</label>
-                            <input type="number" data-group="ali" data-type="asset" id="ali_ye" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-3 py-2 outline-none border border-transparent text-sm">
+                            <input type="text" data-group="ali" data-type="asset" id="ali_ye" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-3 py-2 outline-none border border-transparent text-sm decimal-input">
                         </div>
                         <div>
                             <label class="text-[10px] text-gray-400">余额宝</label>
-                            <input type="number" data-group="ali" data-type="asset" id="ali_yeb" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-3 py-2 outline-none border border-transparent text-sm">
+                            <input type="text" data-group="ali" data-type="asset" id="ali_yeb" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-3 py-2 outline-none border border-transparent text-sm decimal-input">
                         </div>
                         <div>
                             <label class="text-[10px] text-gray-400">余利宝</label>
-                            <input type="number" data-group="ali" data-type="asset" id="ali_ylb" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-3 py-2 outline-none border border-transparent text-sm">
+                            <input type="text" data-group="ali" data-type="asset" id="ali_ylb" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-3 py-2 outline-none border border-transparent text-sm decimal-input">
                         </div>
                         <div>
                             <label class="text-[10px] text-gray-400">理财产品</label>
-                            <input type="number" data-group="ali" data-type="asset" id="ali_lc" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-3 py-2 outline-none border border-transparent text-sm">
+                            <input type="text" data-group="ali" data-type="asset" id="ali_lc" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-3 py-2 outline-none border border-transparent text-sm decimal-input">
                         </div>
                     </div>
                 </div>
@@ -156,7 +205,7 @@
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-400">交通银行</label>
-                        <input type="number" data-group="bank" data-type="asset" id="bank_jt" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm">
+                        <input type="text" data-group="bank" data-type="asset" id="bank_jt" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
                     </div>
                 </div>
                 <div class="bg-green-600 rounded-xl p-4 flex justify-between items-center shadow-lg shadow-green-100">
@@ -172,15 +221,15 @@
                 <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-orange-400 space-y-4">
                     <div>
                         <label class="text-[10px] text-gray-400">之前借出闲鱼店周转 (+)</label>
-                        <input type="number" id="adj_lend" placeholder="0.00" inputmode="decimal" class="w-full bg-orange-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm">
+                        <input type="text" id="adj_lend" placeholder="0.00" inputmode="decimal" class="w-full bg-orange-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-400">闲鱼店账户应有 (-)</label>
-                        <input type="number" id="adj_shop" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm">
+                        <input type="text" id="adj_shop" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-400">代付家庭余额 (-)</label>
-                        <input type="number" id="adj_family" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm">
+                        <input type="text" id="adj_family" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
                     </div>
                 </div>
             </section>
@@ -238,7 +287,7 @@
                         <option value="其他">其他</option>
                     </select>
                     <input type="date" id="log_date" class="w-full bg-gray-50 rounded-xl px-2 py-2.5 outline-none text-sm">
-                    <input type="number" id="log_amount" placeholder="支出金额" min="0" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2.5 outline-none text-sm">
+                    <input type="text" id="log_amount" placeholder="支出金额" inputmode="decimal" step="0.01" max="99999.99" class="w-full bg-gray-50 rounded-xl px-4 py-2.5 outline-none text-sm decimal-input">
                     <button onclick="addLog()" class="bg-purple-600 text-white rounded-xl font-bold text-sm shadow-md btn-active">记一笔</button>
                 </div>
             </div>
@@ -427,7 +476,7 @@
         function calculateAssets() {
             let totalAssets = 0, subWx = 0, subAli = 0, subBank = 0;
             const currentInputs = {};
-            document.querySelectorAll('input[type="number"]').forEach(input => {
+            document.querySelectorAll('input.decimal-input').forEach(input => {
                 if (!input.id.startsWith('log_') && !input.id.startsWith('edit_')) {
                     const val = parseFloat(input.value) || 0;
                     currentInputs[input.id] = input.value;
@@ -1208,6 +1257,66 @@
             renderDezhouSummary();
         }
 
+        let _dzPeriodKeys = [], _dzPeriodMap = {};
+
+        // ===== K-line fullscreen =====
+        function enterDzFullscreen() {
+            const trendEl = document.getElementById('dezhoUTrend');
+            if (!trendEl || !trendEl.innerHTML.trim()) return;
+            const body = document.getElementById('klineFsBody');
+            // 克隆趋势图内容到全屏层
+            body.innerHTML = trendEl.innerHTML;
+            // 移除克隆内容中的全屏按钮（全屏层已有关闭按钮）
+            body.querySelector('.kline-fs-btn')?.remove();
+            // 为每根K线添加详细文字（收入/支出/净盈亏）
+            body.querySelectorAll('.kline-bar-group').forEach(el => {
+                const key = el.getAttribute('data-key');
+                const p = _dzPeriodMap[key];
+                if (!p) return;
+                const detailDiv = document.createElement('div');
+                detailDiv.className = 'kline-detail';
+                detailDiv.innerHTML =
+                    '<span class="kline-detail-income">收 ' + formatMoney(p.income) + '</span>' +
+                    '<span class="kline-detail-expense">支 ' + formatMoney(p.expense) + '</span>';
+                el.appendChild(detailDiv);
+            });
+            const overlay = document.getElementById('klineFsOverlay');
+            overlay.classList.add('open');
+            // 尝试全屏API和横屏锁定
+            try {
+                const el = overlay;
+                if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+                else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+            } catch(e) {}
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(() => {});
+                }
+            } catch(e) {}
+            document.addEventListener('fullscreenchange', onFsChange);
+            document.addEventListener('webkitfullscreenchange', onFsChange);
+        }
+
+        function exitDzFullscreen() {
+            document.getElementById('klineFsOverlay').classList.remove('open');
+            document.getElementById('klineFsBody').innerHTML = '';
+            try {
+                if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+                else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
+            } catch(e) {}
+            try {
+                if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+            } catch(e) {}
+            document.removeEventListener('fullscreenchange', onFsChange);
+            document.removeEventListener('webkitfullscreenchange', onFsChange);
+        }
+
+        function onFsChange() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                exitDzFullscreen();
+            }
+        }
+
         function renderDezhouSummary() {
             const logs = logData;
             let dzIn = 0, dzOut = 0, dzWinCount = 0, dzLossCount = 0;
@@ -1236,6 +1345,8 @@
                 periodMap[key].count++;
             });
             const keys = Object.keys(periodMap).sort(); // chronological
+            _dzPeriodKeys = keys;
+            _dzPeriodMap = periodMap;
             const trendEl = document.getElementById('dezhoUTrend');
             if (!keys.length) { trendEl.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">暂无德州记录</div>'; return; }
 
@@ -1252,11 +1363,14 @@
             const lossPeriods = totalPeriods - winPeriods;
             const avgNet = netValues.reduce((s, v) => s + v, 0) / totalPeriods;
 
-            let html = '<div class="kline-chart-info">' +
+            let html = '<div class="kline-chart-info" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap">' +
+                '<div style="display:flex;gap:16px;flex-wrap:wrap">' +
                 '<span>周期: <b>' + totalPeriods + '</b></span>' +
                 '<span>盈利: <b style="color:#ef4444">' + winPeriods + '次</b></span>' +
                 '<span>亏损: <b style="color:#22c55e">' + lossPeriods + '次</b></span>' +
                 '<span>场均: <b>' + (avgNet >= 0 ? '+' : '') + formatMoney(avgNet) + '</b></span>' +
+                '</div>' +
+                '<button class="kline-fs-btn" onclick="enterDzFullscreen()">⛶ 全屏</button>' +
                 '</div>';
 
             const zeroPx = chartHeight / 2; // zero line is at 50%
@@ -1291,7 +1405,7 @@
                     wickBottom = Math.min(chartHeight, candleBottom + wickLen);
                 }
 
-                html += '<div class="kline-bar-group ' + (isUp ? 'kline-up' : 'kline-down') + '">';
+                html += '<div class="kline-bar-group ' + (isUp ? 'kline-up' : 'kline-down') + '" data-key="' + key + '">';
                 html += '<div class="kline-candle-area" style="height:' + chartHeight + 'px">';
                 // Candle body
                 html += '<div class="kline-candle" style="top:' + candleTop + 'px;height:' + (candleBottom - candleTop) + 'px"></div>';
@@ -1385,18 +1499,32 @@
         }
 
         // ========== 初始化 ==========
-        document.querySelectorAll('input[type="number"]').forEach(input => {
-            if (!input.id.startsWith('log_') && !input.id.startsWith('edit_')) input.addEventListener('input', () => { calculateAssets(); calculateLedgerTotal(); });
+        document.querySelectorAll('input.decimal-input').forEach(input => {
+            if (!input.id.startsWith('log_') && !input.id.startsWith('edit_')) input.addEventListener('input', function() { filterDecimal(this); calculateAssets(); calculateLedgerTotal(); });
             input.addEventListener('focus', function() { setTimeout(() => this.select(), 50); });
         });
         document.getElementById('log_date').valueAsDate = new Date();
-        // 金额输入过滤：只允许正数
-        function filterPositiveNum(el) {
-            if (el.value.startsWith('-')) el.value = el.value.slice(1);
-            el.value = el.value.replace(/[eE]/g, '');
+        // 金额输入过滤：只允许数字和小数点，支持 99999.99
+        function filterDecimal(el) {
+            let v = el.value;
+            v = v.replace(/,/g, '');
+            v = v.replace(/[^0-9.]/g, '');
+            // 只保留第一个小数点
+            const firstDot = v.indexOf('.');
+            if (firstDot !== -1) v = v.substring(0, firstDot + 1) + v.substring(firstDot + 1).replace(/\./g, '');
+            // 限制小数点后最多2位
+            const dotIdx = v.indexOf('.');
+            if (dotIdx !== -1 && v.length - dotIdx > 3) v = v.substring(0, dotIdx + 3);
+            // 限制整数部分最多5位
+            const intPart = dotIdx !== -1 ? v.substring(0, dotIdx) : v;
+            if (intPart.length > 5) v = dotIdx !== -1 ? intPart.substring(0, 5) + v.substring(dotIdx) : intPart.substring(0, 5);
+            // 限制最大值 99999.99
+            const num = parseFloat(v);
+            if (!isNaN(num) && num > 99999.99) v = '99999.99';
+            el.value = v;
         }
-        document.getElementById('log_amount').addEventListener('input', function() { filterPositiveNum(this); });
-        document.getElementById('edit_amount').addEventListener('input', function() { filterPositiveNum(this); });
+        document.getElementById('log_amount').addEventListener('input', function() { filterDecimal(this); });
+        document.getElementById('edit_amount').addEventListener('input', function() { filterDecimal(this); });
         loadSavedData();
         migrateOldData();
         switchView(viewMode);
@@ -1415,6 +1543,15 @@
         }
     </script>
 
+    <!-- K-line Fullscreen Overlay -->
+    <div class="kline-fs-overlay" id="klineFsOverlay">
+        <div class="kline-fs-header">
+            <span class="kline-fs-title">🃏 德州K线趋势</span>
+            <button class="kline-fs-close" onclick="exitDzFullscreen()">✕</button>
+        </div>
+        <div class="kline-fs-body" id="klineFsBody"></div>
+    </div>
+
     <!-- Edit Log Modal -->
     <div class="edit-modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
         <div class="edit-modal">
@@ -1422,7 +1559,7 @@
             <label>事项说明</label>
             <input type="text" id="edit_title">
             <label>金额</label>
-            <input type="number" id="edit_amount" min="0" inputmode="decimal">
+            <input type="text" id="edit_amount" inputmode="decimal" step="0.01" max="99999.99" class="decimal-input">
             <label>日期</label>
             <input type="date" id="edit_date">
             <label>账户</label>
