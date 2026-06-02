@@ -163,7 +163,7 @@ input.decimal-input { -moz-appearance: textfield; }
 <body class="bg-gray-50 min-h-screen">
 
     <!-- 版本标识 -->
-    <div class="version-badge" title="数据仅存储在浏览器 localStorage">v0.22</div>
+    <div class="version-badge" title="数据仅存储在浏览器 localStorage">v0.23</div>
 
     <main class="pb-24">
         <!-- ========== 页面一：资产概览 ========== -->
@@ -519,7 +519,8 @@ input.decimal-input { -moz-appearance: textfield; }
                     else if (group === 'bank') subBank += val;
                 }
             });
-            localStorage.setItem(KEY_ASSETS, JSON.stringify(currentInputs));
+            try { localStorage.setItem(KEY_ASSETS, JSON.stringify(currentInputs)); }
+            catch (e) { console.warn('KEY_ASSETS 保存失败:', e); }
             totalAssets = subWx + subAli + subBank;
             document.getElementById('sub_wx').innerText = formatMoney(subWx);
             document.getElementById('sub_ali').innerText = formatMoney(subAli);
@@ -551,6 +552,7 @@ input.decimal-input { -moz-appearance: textfield; }
 
         function loadSavedData() {
             const saved = JSON.parse(localStorage.getItem(KEY_ASSETS) || '{}');
+            if (Object.keys(saved).length === 0) console.warn('KEY_ASSETS 无已保存数据');
             for (let id in saved) { if (document.getElementById(id)) document.getElementById(id).value = saved[id]; }
             calculateAssets();
             calculateLedgerTotal();
@@ -931,6 +933,7 @@ input.decimal-input { -moz-appearance: textfield; }
             localStorage.setItem(KEY_LOGS, JSON.stringify(logData));
             renderLedger();
             calculateLedgerTotal();
+            renderStats();
             document.getElementById('log_title').value = '';
             document.getElementById('log_amount').value = '';
         }
@@ -973,6 +976,7 @@ input.decimal-input { -moz-appearance: textfield; }
                 localStorage.setItem(KEY_LOGS, JSON.stringify(logData));
                 renderLedger();
                 calculateLedgerTotal();
+                renderStats();
             }
         }
 
@@ -1032,6 +1036,7 @@ input.decimal-input { -moz-appearance: textfield; }
             closeEditModal();
             renderLedger();
             calculateLedgerTotal();
+            renderStats();
         }
 
         function closeEditModal() {
@@ -1533,7 +1538,10 @@ input.decimal-input { -moz-appearance: textfield; }
 
         // ========== 初始化 ==========
         document.querySelectorAll('input.decimal-input').forEach(input => {
-            if (!input.id.startsWith('log_') && !input.id.startsWith('edit_')) input.addEventListener('input', function() { filterDecimal(this); calculateAssets(); calculateLedgerTotal(); });
+            if (!input.id.startsWith('log_') && !input.id.startsWith('edit_')) {
+                input.addEventListener('input', function() { filterDecimal(this); calculateAssets(); calculateLedgerTotal(); });
+                input.addEventListener('change', function() { filterDecimal(this); calculateAssets(); calculateLedgerTotal(); });
+            }
             input.addEventListener('focus', function() { setTimeout(() => this.select(), 50); });
         });
         document.getElementById('log_date').valueAsDate = new Date();
