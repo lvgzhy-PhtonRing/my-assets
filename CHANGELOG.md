@@ -1,5 +1,17 @@
 # 资产账本 PRO 变更日志
 
+## v0.24 (2026-06-02)
+
+修复页面刷新后资产概览数据全部归零的关键问题。
+
+---
+
+### 修复
+
+1. **页面刷新后资产概览数据全部归零** — 编辑弹窗输入框 `edit_amount` 的 HTML 定义在 `<script>` 标签之后，初始化脚本执行时该 DOM 元素尚不存在，`document.getElementById('edit_amount')` 返回 `null` 导致 `TypeError`，后续 `loadSavedData()` 函数无法执行。修复方案：延迟绑定 `edit_amount` 的输入事件监听器，确保 `loadSavedData()` 始终成功执行。
+
+---
+
 ## v0.23 (2026-06-02)
 
 修复资产概览数据刷新丢失与统计报表实时更新问题。
