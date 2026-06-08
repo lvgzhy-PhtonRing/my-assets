@@ -258,11 +258,17 @@ input.decimal-input { -moz-appearance: textfield; }
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-400">闲鱼店账户应有 (-)</label>
-                        <input type="text" id="adj_shop" placeholder="0.00" inputmode="decimal" data-allow-negative="true" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
+                        <div class="flex gap-1">
+                            <input type="text" id="adj_shop" placeholder="0.00" inputmode="decimal" data-allow-negative="true" class="flex-1 bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
+                            <button onclick="toggleNeg('adj_shop')" class="px-3 py-2 text-xs rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-100 active:bg-gray-200" style="min-width:36px">±</button>
+                        </div>
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-400">代付家庭余额 (-)</label>
-                        <input type="text" id="adj_family" placeholder="0.00" inputmode="decimal" data-allow-negative="true" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
+                        <div class="flex gap-1">
+                            <input type="text" id="adj_family" placeholder="0.00" inputmode="decimal" data-allow-negative="true" class="flex-1 bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
+                            <button onclick="toggleNeg('adj_family')" class="px-3 py-2 text-xs rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-100 active:bg-gray-200" style="min-width:36px">±</button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1580,6 +1586,15 @@ input.decimal-input { -moz-appearance: textfield; }
                 el.classList.toggle('text-red-500', val < 0);
                 el.classList.toggle('font-bold', val < 0);
             });
+        }
+
+        function toggleNeg(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const val = parseFloat(el.value) || 0;
+            el.value = val === 0 ? '-' : String(-val);
+            calculateAssets();
+            calculateLedgerTotal();
         }
         document.getElementById('log_amount').addEventListener('input', function() { filterDecimal(this); });
         // edit_amount 在 HTML 中位于 script 标签之后（Edit Log Modal），需延迟绑定
