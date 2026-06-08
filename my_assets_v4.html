@@ -163,7 +163,7 @@ input.decimal-input { -moz-appearance: textfield; }
 <body class="bg-gray-50 min-h-screen">
 
     <!-- 版本标识 -->
-    <div class="version-badge" title="数据仅存储在浏览器 localStorage">v0.24</div>
+    <div class="version-badge" title="数据仅存储在浏览器 localStorage">v0.25</div>
 
     <main class="pb-24">
         <!-- ========== 页面一：资产概览 ========== -->
@@ -258,11 +258,11 @@ input.decimal-input { -moz-appearance: textfield; }
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-400">闲鱼店账户应有 (-)</label>
-                        <input type="text" id="adj_shop" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
+                        <input type="text" id="adj_shop" placeholder="0.00" inputmode="decimal" data-allow-negative="true" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-400">代付家庭余额 (-)</label>
-                        <input type="text" id="adj_family" placeholder="0.00" inputmode="decimal" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
+                        <input type="text" id="adj_family" placeholder="0.00" inputmode="decimal" data-allow-negative="true" class="w-full bg-gray-50 rounded-xl px-4 py-2 outline-none border border-transparent text-sm decimal-input">
                     </div>
                 </div>
             </section>
@@ -536,6 +536,7 @@ input.decimal-input { -moz-appearance: textfield; }
             document.getElementById('totalAssetsHeader').innerText = formatMoney(totalAssets);
             document.getElementById('adjustmentValue').innerText = (adjustment >= 0 ? '+' : '') + formatMoney(adjustment);
             resEl.className = finalVal < 0 ? 'text-4xl font-bold text-red-400' : 'text-4xl font-bold text-white';
+            refreshNegHighlight();
             return { actualVal: finalVal, totalAssets, adjustment, assets: currentInputs };
         }
 
@@ -1549,6 +1550,10 @@ input.decimal-input { -moz-appearance: textfield; }
         function filterDecimal(el) {
             let v = el.value;
             v = v.replace(/,/g, '');
+            const allowNegative = el.dataset.allowNegative === 'true';
+            // 负号只允许在首位
+            const hasMinus = allowNegative && /^-/.test(v);
+            if (hasMinus) v = v.substring(1);
             v = v.replace(/[^0-9.]/g, '');
             // 只保留第一个小数点
             const firstDot = v.indexOf('.');
@@ -1559,10 +1564,22 @@ input.decimal-input { -moz-appearance: textfield; }
             // 限制整数部分最多5位
             const intPart = dotIdx !== -1 ? v.substring(0, dotIdx) : v;
             if (intPart.length > 5) v = dotIdx !== -1 ? intPart.substring(0, 5) + v.substring(dotIdx) : intPart.substring(0, 5);
-            // 限制最大值 99999.99
+            // 限制绝对值最大值 99999.99
             const num = parseFloat(v);
             if (!isNaN(num) && num > 99999.99) v = '99999.99';
+            // 恢复负号（仅当值 > 0 时）
+            if (hasMinus && parseFloat(v) > 0) v = '-' + v;
             el.value = v;
+        }
+
+        function refreshNegHighlight() {
+            ['adj_shop', 'adj_family'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const val = parseFloat(el.value) || 0;
+                el.classList.toggle('text-red-500', val < 0);
+                el.classList.toggle('font-bold', val < 0);
+            });
         }
         document.getElementById('log_amount').addEventListener('input', function() { filterDecimal(this); });
         // edit_amount 在 HTML 中位于 script 标签之后（Edit Log Modal），需延迟绑定
