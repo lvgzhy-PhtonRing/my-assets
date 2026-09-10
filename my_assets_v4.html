@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>资产账本 PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -158,12 +159,55 @@ input.decimal-input { -moz-appearance: textfield; }
             box-shadow: 0 2px 8px rgba(99,102,241,0.3);
             cursor: help;
         }
+
+        /* Cloud status bar */
+        .cloud-status-bar {
+            position: fixed; top: 32px; right: 8px; z-index: 998;
+            background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+            padding: 3px 10px; font-size: 10px; color: #6b7280;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: flex; align-items: center; gap: 4px;
+        }
+        .cloud-status-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+        }
+        .cloud-status-dot.online { background: #22c55e; }
+        .cloud-status-dot.offline { background: #ef4444; }
+        .cloud-status-dot.syncing { background: #3b82f6; animation: cloudPulse 1s infinite; }
+        @keyframes cloudPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* Cloud history modal */
+        .cloud-history-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.4); z-index: 400;
+            align-items: center; justify-content: center;
+        }
+        .cloud-history-overlay.open { display: flex; }
+        .cloud-history-modal {
+            background: #fff; border-radius: 16px; width: 90%; max-width: 400px;
+            max-height: 80vh; overflow-y: auto; padding: 20px;
+        }
+        .cloud-history-modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+        .cloud-history-item {
+            padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: 8px;
+        }
+        .cloud-history-item .cloud-label { font-size: 12px; font-weight: 600; color: #1f2937; }
+        .cloud-history-item .cloud-time { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+        .cloud-history-item .cloud-type-badge {
+            font-size: 9px; padding: 1px 6px; border-radius: 8px; margin-left: 4px;
+        }
+        .cloud-history-item .cloud-type-badge.auto { background: #dbeafe; color: #2563eb; }
+        .cloud-history-item .cloud-type-badge.manual { background: #fef3c7; color: #d97706; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
     <!-- 版本标识 -->
-    <div class="version-badge" title="数据仅存储在浏览器 localStorage">v0.26</div>
+    <div class="version-badge" title="数据存储在浏览器 localStorage + 云端备份">v0.30</div>
+    <div class="cloud-status-bar" id="cloudStatusBar">
+        <span class="cloud-status-dot offline" id="cloudStatusDot"></span>
+        <span id="cloudStatusText">未登录</span>
+    </div>
 
     <main class="pb-24">
         <!-- ========== 页面一：资产概览 ========== -->
@@ -280,6 +324,17 @@ input.decimal-input { -moz-appearance: textfield; }
                 <button onclick="exportData()" class="text-[11px] text-green-500 border border-green-200 px-4 py-2 rounded-full bg-green-50">💾 导出数据备份</button>
                 <button onclick="importData()" class="text-[11px] text-orange-500 border border-orange-200 px-4 py-2 rounded-full bg-orange-50">📂 导入数据恢复</button>
                 <button onclick="clearAllData()" class="text-[11px] text-red-500 border border-red-200 px-4 py-2 rounded-full bg-red-50 col-span-2">🗑️ 清空所有数据</button>
+            </div>
+            <div class="mt-4 mb-6 px-2">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-1.5 h-4 bg-cyan-500 rounded-full mr-1"></div>
+                    <h2 class="text-md font-bold text-gray-700">云备份</h2>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="cloudLoginToggle()" id="cloudLoginBtn" class="text-[11px] text-cyan-600 border border-cyan-200 px-4 py-2 rounded-full bg-cyan-50">☁️ 登录云备份</button>
+                    <button onclick="manualCloudSync()" class="text-[11px] text-cyan-600 border border-cyan-200 px-4 py-2 rounded-full bg-cyan-50">📤 手动云备份</button>
+                    <button onclick="renderCloudHistory()" class="text-[11px] text-cyan-600 border border-cyan-200 px-4 py-2 rounded-full bg-cyan-50 col-span-2">📋 查看云端历史</button>
+                </div>
             </div>
         </div>
 
@@ -448,6 +503,32 @@ input.decimal-input { -moz-appearance: textfield; }
         <div class="flex-1 flex overflow-hidden">
             <div class="w-13 border-r border-gray-200 p-3 bg-gray-50 flex-shrink-0" style="width:35%;max-height:50%;overflow-y:auto;" id="snapshotList"></div>
             <div class="flex-1 overflow-y-auto p-4" id="snapshotContent"></div>
+        </div>
+    </div>
+
+    <!-- ========== 云备份登录弹窗 ========== -->
+    <div class="edit-modal-overlay" id="cloudLoginModal" onclick="if(event.target===this)closeCloudLoginModal()">
+        <div class="edit-modal">
+            <h3>☁️ 登录云备份</h3>
+            <label>邮箱</label>
+            <input type="email" id="cloudEmail" placeholder="your@email.com">
+            <label>密码</label>
+            <input type="password" id="cloudPassword" placeholder="密码">
+            <div class="edit-btn-row">
+                <button class="btn-cancel" onclick="closeCloudLoginModal()">取消</button>
+                <button class="btn-save" onclick="cloudLogin()">登录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 云端备份历史弹窗 ========== -->
+    <div class="cloud-history-overlay" id="cloudHistoryModal">
+        <div class="cloud-history-modal">
+            <h3>📋 云端备份历史</h3>
+            <div id="cloudHistoryList"></div>
+            <div class="edit-btn-row">
+                <button class="btn-cancel" onclick="closeCloudHistoryModal()">关闭</button>
+            </div>
         </div>
     </div>
 
@@ -1547,6 +1628,304 @@ input.decimal-input { -moz-appearance: textfield; }
             location.reload();
         }
 
+        // ========== Supabase 云备份 ==========
+        const SUPABASE_URL = 'https://mqdxmbsaddebxlallgos.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xZHhtYnNhZGRlYnhsYWxsZ29zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDA3MjAsImV4cCI6MjA5MjA3NjcyMH0.gdptFoYcpfHtKRcsfwU-tnSteicHYjwa_znLLzBc3pE';
+        const SB_TABLE = 'asset_ledger_snapshots';
+        let sbClient = null;
+        let sbUser = null;
+        let sbSyncing = false;
+
+        function initSupabase() {
+            if (SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
+                console.warn('Supabase anon key 未配置，云备份功能已禁用');
+                return;
+            }
+            try {
+                if (typeof supabase !== 'undefined') {
+                    sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                }
+            } catch(e) {
+                console.warn('Supabase 初始化失败:', e);
+            }
+        }
+
+        function updateCloudStatus(text, status) {
+            const dot = document.getElementById('cloudStatusDot');
+            const txt = document.getElementById('cloudStatusText');
+            const btn = document.getElementById('cloudLoginBtn');
+            if (dot && txt) {
+                dot.className = 'cloud-status-dot ' + (status || 'offline');
+                txt.textContent = text;
+            }
+            if (btn) {
+                if (sbUser) {
+                    btn.textContent = '☁️ 已登录';
+                    btn.className = 'text-[11px] text-green-600 border border-green-200 px-4 py-2 rounded-full bg-green-50';
+                } else {
+                    btn.textContent = '☁️ 登录云备份';
+                    btn.className = 'text-[11px] text-cyan-600 border border-cyan-200 px-4 py-2 rounded-full bg-cyan-50';
+                }
+            }
+        }
+
+        function getWeekLabel(date) {
+            date = date || new Date();
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+            return d.getUTCFullYear() + '-W' + String(weekNo).padStart(2, '0');
+        }
+
+        function getBackupData() {
+            return {
+                assets: JSON.parse(localStorage.getItem(KEY_ASSETS) || '{}'),
+                logs: logData,
+                snapshots: JSON.parse(localStorage.getItem(KEY_SNAPSHOTS) || '{}')
+            };
+        }
+
+        function applyBackupData(data) {
+            if (data.assets) localStorage.setItem(KEY_ASSETS, JSON.stringify(data.assets));
+            if (data.logs) localStorage.setItem(KEY_LOGS, JSON.stringify(data.logs));
+            if (data.snapshots) localStorage.setItem(KEY_SNAPSHOTS, JSON.stringify(data.snapshots));
+            logData = data.logs || [];
+            refreshUI();
+        }
+
+        async function cloudLogin() {
+            const email = document.getElementById('cloudEmail').value.trim();
+            const password = document.getElementById('cloudPassword').value;
+            if (!email || !password) { alert('请输入邮箱和密码'); return; }
+            if (!sbClient) { alert('云备份未初始化，请刷新页面'); return; }
+
+            closeCloudLoginModal();
+            updateCloudStatus('登录中...', 'syncing');
+
+            try {
+                const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    alert('登录失败: ' + error.message);
+                    updateCloudStatus('未登录', 'offline');
+                    return;
+                }
+                sbUser = data.user;
+                updateCloudStatus('已登录', 'online');
+                autoCloudSync();
+            } catch(e) {
+                alert('登录异常: ' + e.message);
+                updateCloudStatus('未登录', 'offline');
+            }
+        }
+
+        async function cloudLogout() {
+            if (!sbClient) return;
+            await sbClient.auth.signOut();
+            sbUser = null;
+            updateCloudStatus('未登录', 'offline');
+        }
+
+        function cloudLoginToggle() {
+            if (sbUser) {
+                if (confirm('确定退出云备份登录？')) cloudLogout();
+            } else {
+                openCloudLoginModal();
+            }
+        }
+
+        function openCloudLoginModal() {
+            document.getElementById('cloudLoginModal').classList.add('open');
+        }
+
+        function closeCloudLoginModal() {
+            document.getElementById('cloudLoginModal').classList.remove('open');
+        }
+
+        async function autoCloudSync() {
+            if (!sbClient || !sbUser || sbSyncing) return;
+            sbSyncing = true;
+
+            updateCloudStatus('检查同步...', 'syncing');
+
+            try {
+                const weekLabel = getWeekLabel();
+                const { data: existing, error: checkError } = await sbClient
+                    .from(SB_TABLE)
+                    .select('id')
+                    .eq('user_id', sbUser.id)
+                    .eq('week_label', weekLabel)
+                    .limit(1);
+
+                if (checkError) {
+                    console.warn('检查同步状态失败:', checkError.message);
+                    updateCloudStatus('检查失败', 'offline');
+                    return;
+                }
+
+                if (existing && existing.length > 0) {
+                    updateCloudStatus('本周已同步', 'online');
+                    return;
+                }
+
+                await createCloudSnapshot(weekLabel, 'auto');
+            } catch(e) {
+                console.warn('自动同步失败:', e);
+                alert('云同步失败: ' + e.message);
+                updateCloudStatus('同步失败', 'offline');
+            } finally {
+                sbSyncing = false;
+            }
+        }
+
+        async function createCloudSnapshot(weekLabel, type) {
+            if (!sbClient || !sbUser) return false;
+
+            updateCloudStatus('同步中...', 'syncing');
+
+            try {
+                const data = getBackupData();
+                const { error } = await sbClient
+                    .from(SB_TABLE)
+                    .insert({
+                        user_id: sbUser.id,
+                        week_label: weekLabel,
+                        snapshot_type: type,
+                        data: data
+                    });
+
+                if (error) {
+                    alert('云备份失败: ' + error.message);
+                    updateCloudStatus('同步失败', 'offline');
+                    return false;
+                }
+
+                updateCloudStatus('已同步 · ' + weekLabel, 'online');
+                return true;
+            } catch(e) {
+                alert('云备份失败: ' + e.message);
+                updateCloudStatus('同步失败', 'offline');
+                return false;
+            }
+        }
+
+        async function manualCloudSync() {
+            if (!sbClient || !sbUser) {
+                alert('请先登录云备份');
+                return;
+            }
+
+            const now = new Date();
+            const label = now.getFullYear() + '-' +
+                String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                String(now.getDate()).padStart(2, '0') + '_' +
+                String(now.getHours()).padStart(2, '0') + ':' +
+                String(now.getMinutes()).padStart(2, '0');
+
+            const success = await createCloudSnapshot(label, 'manual');
+            if (success) alert('手动云备份成功');
+        }
+
+        async function renderCloudHistory() {
+            if (!sbClient || !sbUser) {
+                alert('请先登录云备份');
+                return;
+            }
+
+            document.getElementById('cloudHistoryModal').classList.add('open');
+            const listEl = document.getElementById('cloudHistoryList');
+            listEl.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">加载中...</div>';
+
+            try {
+                const { data, error } = await sbClient
+                    .from(SB_TABLE)
+                    .select('id, week_label, snapshot_type, created_at')
+                    .eq('user_id', sbUser.id)
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                if (error) {
+                    listEl.innerHTML = '<div class="text-center text-red-400 text-sm py-4">加载失败: ' + error.message + '</div>';
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    listEl.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">暂无云端备份<br>登录后会自动同步</div>';
+                    return;
+                }
+
+                listEl.innerHTML = data.map(s => {
+                    const date = new Date(s.created_at);
+                    const dateStr = date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+                    const typeLabel = s.snapshot_type === 'auto' ? '自动' : '手动';
+                    const typeClass = s.snapshot_type === 'auto' ? 'auto' : 'manual';
+                    return '<div class="cloud-history-item">' +
+                        '<div class="flex items-center justify-between">' +
+                        '<div>' +
+                        '<span class="cloud-label">' + s.week_label + '</span>' +
+                        '<span class="cloud-type-badge ' + typeClass + '">' + typeLabel + '</span>' +
+                        '</div>' +
+                        '<span class="cloud-time">' + dateStr + '</span>' +
+                        '</div>' +
+                        '<button onclick="restoreCloudSnapshot(\'' + s.id + '\')" class="w-full mt-2 py-1.5 text-xs rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-200">🔄 恢复此备份</button>' +
+                        '</div>';
+                }).join('');
+            } catch(e) {
+                listEl.innerHTML = '<div class="text-center text-red-400 text-sm py-4">加载异常: ' + e.message + '</div>';
+            }
+        }
+
+        function closeCloudHistoryModal() {
+            document.getElementById('cloudHistoryModal').classList.remove('open');
+        }
+
+        async function restoreCloudSnapshot(id) {
+            if (!sbClient || !sbUser) return;
+
+            if (!confirm('确定恢复此备份？当前数据将被覆盖！')) return;
+
+            try {
+                const { data, error } = await sbClient
+                    .from(SB_TABLE)
+                    .select('data')
+                    .eq('id', id)
+                    .single();
+
+                if (error) {
+                    alert('获取备份失败: ' + error.message);
+                    return;
+                }
+
+                applyBackupData(data.data);
+                alert('✅ 备份恢复成功！');
+                closeCloudHistoryModal();
+            } catch(e) {
+                alert('恢复失败: ' + e.message);
+            }
+        }
+
+        async function checkCloudSession() {
+            if (!sbClient) {
+                initSupabase();
+            }
+            if (!sbClient) return;
+
+            try {
+                const { data } = await sbClient.auth.getSession();
+                if (data.session) {
+                    sbUser = data.session.user;
+                    updateCloudStatus('已登录', 'online');
+                    autoCloudSync();
+                } else {
+                    updateCloudStatus('未登录', 'offline');
+                }
+            } catch(e) {
+                console.warn('检查会话失败:', e);
+                updateCloudStatus('未登录', 'offline');
+            }
+        }
+
         // ========== 初始化 ==========
         document.querySelectorAll('input.decimal-input').forEach(input => {
             if (!input.id.startsWith('log_') && !input.id.startsWith('edit_')) {
@@ -1609,6 +1988,10 @@ input.decimal-input { -moz-appearance: textfield; }
         loadSavedData();
         migrateOldData();
         switchView(viewMode);
+
+        // 初始化云备份
+        initSupabase();
+        checkCloudSession();
 
         // 首次打开时检测是否有数据
         if (logData.length === 0 && Object.keys(JSON.parse(localStorage.getItem(KEY_ASSETS) || '{}')).length === 0) {
