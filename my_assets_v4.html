@@ -470,6 +470,8 @@ input.decimal-input { -moz-appearance: textfield; }
                     <div class="flex gap-1 bg-gray-100 rounded-lg p-1">
                         <button onclick="switchStatsView('month')" id="stats-view-month" class="px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium">按月</button>
                         <button onclick="switchStatsView('week')" id="stats-view-week" class="px-3 py-1 text-xs rounded-md text-gray-400">按周</button>
+                        <button onclick="switchStatsView('half')" id="stats-view-half" class="px-3 py-1 text-xs rounded-md text-gray-400">半年</button>
+                        <button onclick="switchStatsView('year')" id="stats-view-year" class="px-3 py-1 text-xs rounded-md text-gray-400">本年</button>
                         <button onclick="switchStatsView('custom')" id="stats-view-custom" class="px-3 py-1 text-xs rounded-md text-gray-400">自定义</button>
                     </div>
                     <div class="flex items-center gap-2">
@@ -506,17 +508,15 @@ input.decimal-input { -moz-appearance: textfield; }
                         <span class="w-2 h-2 bg-red-500 rounded-full inline-block"></span>
                         支出分类
                     </h3>
-                    <div id="statsExpenseCategories" class="space-y-3"></div>
-                    <div id="statsExpenseDetail" class="hidden mt-3 bg-gray-50 rounded-xl overflow-hidden border border-gray-200"></div>
-                </div>
+<div id="statsExpenseCategories" class="space-y-3"></div>
+                    </div>
                 <div class="bg-white rounded-xl p-4 shadow-sm">
                     <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                         <span class="w-2 h-2 bg-green-500 rounded-full inline-block"></span>
                         收入分类
                     </h3>
-                    <div id="statsIncomeCategories" class="space-y-3"></div>
-                    <div id="statsIncomeDetail" class="hidden mt-3 bg-gray-50 rounded-xl overflow-hidden border border-gray-200"></div>
-                </div>
+<div id="statsIncomeCategories" class="space-y-3"></div>
+                    </div>
             </div>
         </div>
 
@@ -1398,6 +1398,8 @@ input.decimal-input { -moz-appearance: textfield; }
             statsMode = mode; statsOffset = 0;
             document.getElementById('stats-view-month').className = mode === 'month' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
             document.getElementById('stats-view-week').className = mode === 'week' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
+            document.getElementById('stats-view-half').className = mode === 'half' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
+            document.getElementById('stats-view-year').className = mode === 'year' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
             document.getElementById('stats-view-custom').className = mode === 'custom' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
             const customRow = document.getElementById('customDateRow');
             const navPrev = document.getElementById('statsNavPrev');
@@ -1442,6 +1444,16 @@ input.decimal-input { -moz-appearance: textfield; }
                 const d = new Date(now.getFullYear(), now.getMonth() + statsOffset, 1);
                 return d.getFullYear() + '年' + (d.getMonth() + 1) + '月';
             }
+            if (statsMode === 'half') {
+                const currentHalf = Math.floor(now.getMonth() / 6);
+                const targetHalf = currentHalf + statsOffset;
+                const year = now.getFullYear() + Math.floor(targetHalf / 2);
+                const half = targetHalf % 2 === 0 ? '上半年' : '下半年';
+                return year + '年' + half;
+            }
+            if (statsMode === 'year') {
+                return (now.getFullYear() + statsOffset) + '年';
+            }
             const d = new Date(now);
             d.setDate(d.getDate() + statsOffset * 7);
             return formatWeekRange(getWeekKeyFromDate(d));
@@ -1467,6 +1479,16 @@ input.decimal-input { -moz-appearance: textfield; }
             if (statsMode === 'month') {
                 start = new Date(now.getFullYear(), now.getMonth() + statsOffset, 1);
                 end = new Date(now.getFullYear(), now.getMonth() + statsOffset + 1, 1);
+            } else if (statsMode === 'half') {
+                const currentHalf = Math.floor(now.getMonth() / 6);
+                const targetHalf = currentHalf + statsOffset;
+                const year = now.getFullYear() + Math.floor(targetHalf / 2);
+                const half = targetHalf % 2;
+                start = new Date(year, half * 6, 1);
+                end = new Date(year, half * 6 + 6, 1);
+            } else if (statsMode === 'year') {
+                start = new Date(now.getFullYear() + statsOffset, 0, 1);
+                end = new Date(now.getFullYear() + statsOffset + 1, 0, 1);
             } else {
                 const d = new Date(now); d.setDate(d.getDate() + statsOffset * 7);
                 const wkStart = new Date(getWeekKeyFromDate(d));
@@ -1718,27 +1740,34 @@ input.decimal-input { -moz-appearance: textfield; }
 
         function renderCatBreakdown(id, catMap, total, logs, type) {
             const el = document.getElementById(id);
-            const detailId = type === 'expense' ? 'statsExpenseDetail' : 'statsIncomeDetail';
             const entries = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
             if (!entries.length) { el.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">暂无记录</div>'; return; }
             const maxVal = entries[0][1];
+            const isExpense = type === 'expense';
             el.innerHTML = entries.map(([cat, val]) => {
                 const pct = total > 0 ? (val / total * 100) : 0;
                 const barW = maxVal > 0 ? (val / maxVal * 100) : 0;
-                const isSelected = statsCategoryDetail === cat && statsCategoryDetailType === type;
-                return '<div class="flex items-center cursor-pointer hover:bg-gray-50 rounded-lg px-1 py-0.5 transition ' + (isSelected ? 'bg-indigo-50 ring-1 ring-indigo-200' : '') + '" onclick="toggleCatDetail(\'' + cat.replace(/'/g, "\\'") + '\',\'' + type + '\')">' +
+                const filtered = logs.filter(item => (item.category || '其他') === cat);
+                let detailHtml = '';
+                if (filtered.length) {
+                    detailHtml = '<div class="mt-2 bg-gray-50 rounded-xl overflow-hidden border border-gray-200">' +
+                        '<div class="px-3 py-2 bg-gray-100 text-xs font-bold text-gray-500 flex justify-between">' +
+                        '<span>共 ' + filtered.length + ' 条</span><span>合计 ' + formatMoney(filtered.reduce((s, i) => s + Math.abs(i.amount), 0)) + '</span></div>' +
+                        filtered.sort((a, b) => String(b.date||'').localeCompare(String(a.date||''))).map(l =>
+                        '<div class="cat-detail-item">' +
+                        '<div><div class="font-medium text-gray-700">' + l.title + '</div>' +
+                        '<div class="cat-detail-date">' + (l.date||'').substring(5) + ' · ' + l.account + '</div></div>' +
+                        '<span class="font-mono font-bold ' + (isExpense ? 'text-red-500' : 'text-green-600') + '">' +
+                        (isExpense ? '-' : '+') + formatMoney(Math.abs(l.amount)) + '</span></div>').join('') +
+                        '</div>';
+                }
+                return '<div class="flex items-center cursor-pointer hover:bg-gray-50 rounded-lg px-1 py-0.5 transition">' +
                     '<span class="text-xs w-20 flex-shrink-0 text-gray-600 truncate">' + cat + '</span>' +
                     '<div class="flex-1 mx-2"><div class="bg-gray-100 rounded-full h-2">' +
                     '<div class="stats-bar" style="width:' + barW + '%;background:' + getCategoryColor(cat) + '"></div></div></div>' +
                     '<span class="text-xs font-mono text-gray-700 w-24 text-right">' + formatMoney(val) + '</span>' +
-                    '<span class="text-[10px] text-gray-400 w-8 text-right">' + pct.toFixed(0) + '%</span></div>';
+                    '<span class="text-[10px] text-gray-400 w-8 text-right">' + pct.toFixed(0) + '%</span></div>' + detailHtml;
             }).join('');
-            // 如果当前有选中的分类，渲染详情
-            if (statsCategoryDetail && statsCategoryDetailType === type && catMap[statsCategoryDetail]) {
-                renderCatDetail(detailId, logs, statsCategoryDetail, type);
-            } else {
-                document.getElementById(detailId).classList.add('hidden');
-            }
         }
 
         function toggleCatDetail(cat, type) {
