@@ -1262,7 +1262,7 @@ input.decimal-input { -moz-appearance: textfield; }
                                         <button class="swipe-btn edit" onclick="openEditModal(${l.id})" title="编辑">编辑</button>
                                         <button class="swipe-btn delete" onclick="deleteLog(${l.id})" title="删除">删除</button>
                                     </div>
-                                    <div class="swipe-content p-3 flex justify-between items-center" onclick="toggleSwipe(this)" onmousemove="dragSwipe(event, this)">
+                                    <div class="swipe-content p-3 flex justify-between items-center" onclick="toggleSwipe(this)" onmousemove="dragSwipe(event, this)" ontouchstart="dragSwipe(event, this)">
                                         <div><div class="text-sm font-medium text-gray-700">${l.title}</div><div class="text-[10px] text-gray-400">${l.date.substring(5)} · ${l.account}</div></div>
                                         <div class="flex items-center space-x-2">
                                             <span class="text-[10px] px-1.5 py-0.5 rounded-full ${getCategoryBadge(l.category)}">${l.category || '其他'}</span>
