@@ -412,7 +412,7 @@ input.decimal-input { -moz-appearance: textfield; }
                     <span>差异: <span id="ledgerDiff">0.00</span></span>
                 </div>
             </div>
-            <div id="log-card" class="bg-red-50 rounded-2xl p-5 mb-8 shadow-sm border border-red-200">
+            <div id="log-card" class="bg-green-50 rounded-2xl p-5 mb-8 shadow-sm border border-green-200">
                 <div class="grid grid-cols-2 gap-3">
                     <div class="col-span-2">
                         <input type="text" id="log_title" placeholder="事项说明不能为空" class="w-full bg-gray-50 rounded-xl px-4 py-3 outline-none text-sm border border-transparent focus:border-purple-300">
@@ -420,11 +420,11 @@ input.decimal-input { -moz-appearance: textfield; }
                     <div class="col-span-2 flex gap-2">
                         <label class="flex-1 cursor-pointer">
                             <input type="radio" name="log_type" value="expense" checked class="hidden">
-                            <div id="type-expense" class="text-center py-2 rounded-xl bg-red-50 text-red-500 border border-red-200 text-sm font-medium">支出</div>
+                            <div id="type-expense" class="text-center py-2 rounded-xl bg-green-50 text-green-600 border border-green-200 text-sm font-medium">支出</div>
                         </label>
                         <label class="flex-1 cursor-pointer">
                             <input type="radio" name="log_type" value="income" class="hidden">
-                            <div id="type-income" class="text-center py-2 rounded-xl bg-gray-50 text-gray-400 border border-gray-200 text-sm font-medium">收入</div>
+                            <div id="type-income" class="text-center py-2 rounded-xl bg-red-50 text-red-500 border border-red-200 text-sm font-medium">收入</div>
                         </label>
                     </div>
                     <select id="log_category" class="w-full bg-gray-50 rounded-xl px-3 py-2.5 outline-none text-sm" onchange="toggleDzModeSelect()">
@@ -503,11 +503,11 @@ input.decimal-input { -moz-appearance: textfield; }
             <div class="grid grid-cols-3 gap-2 mb-4">
                 <div class="bg-white rounded-xl p-2 shadow-sm text-center">
                     <div class="text-[10px] text-gray-400 mb-0.5">总收入</div>
-                    <div id="statsIncome" class="text-base font-bold text-green-600">0.00</div>
+                    <div id="statsIncome" class="text-base font-bold text-red-500">0.00</div>
                 </div>
                 <div class="bg-white rounded-xl p-2 shadow-sm text-center">
                     <div class="text-[10px] text-gray-400 mb-0.5">总支出</div>
-                    <div id="statsExpense" class="text-base font-bold text-red-500">0.00</div>
+                    <div id="statsExpense" class="text-base font-bold text-green-600">0.00</div>
                 </div>
                 <div class="bg-white rounded-xl p-2 shadow-sm text-center">
                     <div class="text-[10px] text-gray-400 mb-0.5">净结余</div>
@@ -553,11 +553,11 @@ input.decimal-input { -moz-appearance: textfield; }
             <div class="grid grid-cols-3 gap-2 mb-4">
                 <div class="bg-white rounded-xl p-2 shadow-sm text-center">
                     <div class="text-[10px] text-gray-400 mb-0.5">德州入账</div>
-                    <div id="dzIncome" class="text-base font-bold text-green-600">0.00</div>
+                    <div id="dzIncome" class="text-base font-bold text-red-500">0.00</div>
                 </div>
                 <div class="bg-white rounded-xl p-2 shadow-sm text-center">
                     <div class="text-[10px] text-gray-400 mb-0.5">德州出账</div>
-                    <div id="dzExpense" class="text-base font-bold text-red-500">0.00</div>
+                    <div id="dzExpense" class="text-base font-bold text-green-600">0.00</div>
                 </div>
                 <div class="bg-white rounded-xl p-2 shadow-sm text-center">
                     <div class="text-[10px] text-gray-400 mb-0.5">德州净盈亏</div>
@@ -912,7 +912,7 @@ input.decimal-input { -moz-appearance: textfield; }
                         const change = v2 - v1;
                         if (change === 0) return;
                         const changeStr = (change > 0 ? '+' : '') + formatMoney(change);
-                        const colorClass = change > 0 ? 'text-green-600' : 'text-red-600';
+                        const colorClass = change > 0 ? 'text-red-500' : 'text-green-600';
                         const arrow = change > 0 ? '↑' : '↓';
                         html += `
                             <div class="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-200">
@@ -940,21 +940,21 @@ input.decimal-input { -moz-appearance: textfield; }
                 const deletedLogs = logs1.filter(l => !keys2.has(keyOf(l)));
                 html += '<div class="space-y-3">';
                 if (newLogs.length > 0) {
-                    html += `<div class="text-sm font-bold text-green-600">▼ 相比新增 (${newLogs.length}条)</div>`;
+                    html += `<div class="text-sm font-bold text-red-500">▼ 相比新增 (${newLogs.length}条)</div>`;
                     html += '<div class="space-y-2 mb-3">';
                     html += newLogs.sort((a,b) => new Date(b.date) - new Date(a.date)).map(l => `
-                        <div class="flex justify-between items-center bg-green-50 p-2 rounded text-xs">
+                        <div class="flex justify-between items-center bg-red-50 p-2 rounded text-xs">
                             <span class="text-gray-700">${l.date.substring(5)} ${l.title}</span>
-                            <span class="${l.amount >= 0 ? 'text-green-600' : 'text-red-600'} font-bold">${l.amount > 0 ? '+' : ''}${formatMoney(l.amount)}</span>
+                            <span class="${l.amount >= 0 ? 'text-red-500' : 'text-green-600'} font-bold">${l.amount > 0 ? '+' : ''}${formatMoney(l.amount)}</span>
                         </div>
                     `).join('');
                     html += '</div>';
                 }
                 if (deletedLogs.length > 0) {
-                    html += `<div class="text-sm font-bold text-red-600">▼ 相比删除 (${deletedLogs.length}条)</div>`;
+                    html += `<div class="text-sm font-bold text-gray-500">▼ 相比删除 (${deletedLogs.length}条)</div>`;
                     html += '<div class="space-y-2">';
                     html += deletedLogs.sort((a,b) => new Date(b.date) - new Date(a.date)).map(l => `
-                        <div class="flex justify-between items-center bg-red-50 p-2 rounded text-xs">
+                        <div class="flex justify-between items-center bg-gray-50 p-2 rounded text-xs">
                             <span class="text-gray-700">${l.date.substring(5)} ${l.title}</span>
                             <span class="text-gray-500 font-medium">${l.amount > 0 ? '+' : ''}${formatMoney(l.amount)}</span>
                         </div>
@@ -1154,16 +1154,16 @@ input.decimal-input { -moz-appearance: textfield; }
         document.querySelectorAll('input[name="log_type"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 document.getElementById('type-expense').className = this.value === 'expense'
-                    ? 'text-center py-2 rounded-xl bg-red-50 text-red-500 border border-red-200 text-sm font-medium'
+                    ? 'text-center py-2 rounded-xl bg-green-50 text-green-600 border border-green-200 text-sm font-medium'
                     : 'text-center py-2 rounded-xl bg-gray-50 text-gray-400 border border-gray-200 text-sm font-medium';
                 document.getElementById('type-income').className = this.value === 'income'
-                    ? 'text-center py-2 rounded-xl bg-green-50 text-green-500 border border-green-200 text-sm font-medium'
+                    ? 'text-center py-2 rounded-xl bg-red-50 text-red-500 border border-red-200 text-sm font-medium'
                     : 'text-center py-2 rounded-xl bg-gray-50 text-gray-400 border border-gray-200 text-sm font-medium';
                 const card = document.getElementById('log-card');
                 const amtInput = document.getElementById('log_amount');
                 const catSelect = document.getElementById('log_category');
                 if (this.value === 'expense') {
-                    card.className = 'bg-red-50 rounded-2xl p-5 mb-8 shadow-sm border border-red-200';
+                    card.className = 'bg-green-50 rounded-2xl p-5 mb-8 shadow-sm border border-green-200';
                     amtInput.placeholder = '支出金额';
                     catSelect.innerHTML =
                         '<option value="德州出账">🃏 德州出账</option>' +
@@ -1173,7 +1173,7 @@ input.decimal-input { -moz-appearance: textfield; }
                         '<option value="归还A队">🔙 归还A队</option>' +
                         '<option value="其他">📦 其他</option>';
                 } else {
-                    card.className = 'bg-green-50 rounded-2xl p-5 mb-8 shadow-sm border border-green-200';
+                    card.className = 'bg-red-50 rounded-2xl p-5 mb-8 shadow-sm border border-red-200';
                     amtInput.placeholder = '收入金额';
                     catSelect.innerHTML =
                         '<option value="德州入账">🃏 德州入账</option>' +
@@ -1356,9 +1356,9 @@ input.decimal-input { -moz-appearance: textfield; }
                                 <span class="font-bold text-gray-700">${label}</span>
                             </div>
                             <div class="flex items-center gap-3 text-xs">
-                                <span class="text-green-600">收 ${formatMoney(income)}</span>
-                                <span class="text-red-500">支 ${formatMoney(expense)}</span>
-                                <span class="${total >= 0 ? 'text-green-600' : 'text-red-500'} font-bold">${total >= 0 ? '+' : ''}${formatMoney(total)}</span>
+                                <span class="text-red-500">收 ${formatMoney(income)}</span>
+                                <span class="text-green-600">支 ${formatMoney(expense)}</span>
+                                <span class="${total >= 0 ? 'text-red-500' : 'text-green-600'} font-bold">${total >= 0 ? '+' : ''}${formatMoney(total)}</span>
                             </div>
                         </div>
                         <div class="group-content space-y-2 mt-2 pl-2${isOld ? ' collapsed' : ''}">
@@ -1373,7 +1373,7 @@ input.decimal-input { -moz-appearance: textfield; }
                                         <div class="flex items-center space-x-2">
                                             <span class="text-[10px] px-1.5 py-0.5 rounded-full ${getCategoryBadge(l.category)}">${l.category || '其他'}</span>
                                             ${l.dzMode ? '<span class="text-[10px] px-1.5 py-0.5 rounded-full ' + (l.dzMode === '线上' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700') + '">' + l.dzMode + '</span>' : ''}
-                                            <span class="text-sm font-mono font-bold ${l.amount >= 0 ? 'text-green-600' : 'text-red-500'}">${l.amount > 0 ? '+' : ''}${formatMoney(l.amount)}</span>
+                                            <span class="text-sm font-mono font-bold ${l.amount >= 0 ? 'text-red-500' : 'text-green-600'}">${l.amount > 0 ? '+' : ''}${formatMoney(l.amount)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1637,7 +1637,7 @@ input.decimal-input { -moz-appearance: textfield; }
             const net = totalIncome - totalExpense;
             const netEl = document.getElementById('statsNet');
             netEl.textContent = (net >= 0 ? '+' : '') + formatMoney(net);
-            netEl.className = 'text-lg font-bold ' + (net >= 0 ? 'text-green-600' : 'text-red-500');
+            netEl.className = 'text-lg font-bold ' + (net >= 0 ? 'text-red-500' : 'text-green-600');
             renderCatBreakdown('statsExpenseCategories', expenseCat, totalExpense, logs, 'expense');
             renderCatBreakdown('statsIncomeCategories', incomeCat, totalIncome, logs, 'income');
         }
@@ -1760,7 +1760,7 @@ input.decimal-input { -moz-appearance: textfield; }
             const netAll = dzIn - dzOut;
             const netEl = document.getElementById('dzNet');
             netEl.textContent = (netAll >= 0 ? '+' : '') + formatMoney(netAll);
-            netEl.className = 'text-base font-bold ' + (netAll >= 0 ? 'text-green-600' : 'text-red-500');
+            netEl.className = 'text-base font-bold ' + (netAll >= 0 ? 'text-red-500' : 'text-green-600');
 
             // Build period map — chronological order (oldest first for chart)
             const periodMap = {};
@@ -1864,7 +1864,7 @@ input.decimal-input { -moz-appearance: textfield; }
                 detailHtml += '<div class="bg-white rounded-xl p-3 shadow-sm">';
                 detailHtml += '<div class="flex justify-between items-center mb-2">';
                 detailHtml += '<span class="text-sm font-bold text-gray-700">' + label + '</span>';
-                detailHtml += '<span class="text-sm font-bold ' + (net >= 0 ? 'text-green-600' : 'text-red-500') + '">' + (net >= 0 ? '+' : '') + formatMoney(net) + '</span>';
+                detailHtml += '<span class="text-sm font-bold ' + (net >= 0 ? 'text-red-500' : 'text-green-600') + '">' + (net >= 0 ? '+' : '') + formatMoney(net) + '</span>';
                 detailHtml += '</div>';
                 detailHtml += '<div class="space-y-1">';
                 items.forEach(item => {
@@ -1873,7 +1873,7 @@ input.decimal-input { -moz-appearance: textfield; }
                     detailHtml += '<div><span class="text-gray-600">' + item.title + '</span>';
                     detailHtml += '<span class="text-gray-400 ml-1">' + item.date.substring(5) + ' · ' + item.account + '</span>';
                     detailHtml += '</div>';
-                    detailHtml += '<span class="font-mono font-bold ' + (isIncome ? 'text-green-600' : 'text-red-500') + '">' + (isIncome ? '+' : '-') + formatMoney(Math.abs(item.amount)) + '</span>';
+                    detailHtml += '<span class="font-mono font-bold ' + (isIncome ? 'text-red-500' : 'text-green-600') + '">' + (isIncome ? '+' : '-') + formatMoney(Math.abs(item.amount)) + '</span>';
                     detailHtml += '</div>';
                 });
                 detailHtml += '</div>';
@@ -1941,7 +1941,7 @@ const filtered = logs.filter(item => {
                 '<div class="cat-detail-item">' +
                 '<div><div class="font-medium text-gray-700">' + l.title + '</div>' +
                 '<div class="cat-detail-date">' + (l.date||'').substring(5) + ' · ' + l.account + '</div></div>' +
-                '<span class="font-mono font-bold ' + (isExpense ? 'text-red-500' : 'text-green-600') + '">' +
+                '<span class="font-mono font-bold ' + (isExpense ? 'text-green-600' : 'text-red-500') + '">' +
                 (isExpense ? '-' : '+') + formatMoney(Math.abs(l.amount)) + '</span></div>'
             ).join('');
         }
