@@ -76,9 +76,9 @@ input.decimal-input { -moz-appearance: textfield; }
             overflow-y: visible; /* 避免横屏时标签被裁切 */
         }
         .kline-fs-body .kline-chart { height: 350px; }
-        .kline-fs-body .kline-candle { width: 18px; }
-        .kline-fs-body .kline-wick { width: 3px; }
-        .kline-fs-body .kline-bar-group { width: 72px; }
+        .kline-fs-body .kline-candle { width: 12px; }
+        .kline-fs-body .kline-wick { width: 2px; }
+        .kline-fs-body .kline-bar-group { width: 48px; }
         .kline-fs-body .kline-label {
             font-size: 10px; max-width: 64px;
             white-space: nowrap; overflow: visible; text-overflow: clip;
@@ -1706,6 +1706,11 @@ input.decimal-input { -moz-appearance: textfield; }
             });
             const overlay = document.getElementById('klineFsOverlay');
             overlay.classList.add('open');
+            // 全屏K线自动滚动到最右侧（最新数据）
+            const fsChartWrap = body.querySelector('.kline-chart-wrap');
+            if (fsChartWrap) {
+                setTimeout(() => { fsChartWrap.scrollLeft = fsChartWrap.scrollWidth; }, 100);
+            }
             // 尝试全屏API和横屏锁定
             try {
                 const el = overlay;
@@ -1872,17 +1877,51 @@ input.decimal-input { -moz-appearance: textfield; }
                 detailHtml += '<span class="text-sm font-bold text-gray-700">' + label + '</span>';
                 detailHtml += '<span class="text-sm font-bold ' + (net >= 0 ? 'text-red-500' : 'text-green-600') + '">' + (net >= 0 ? '+' : '') + formatMoney(net) + '</span>';
                 detailHtml += '</div>';
-                detailHtml += '<div class="space-y-1">';
-                items.forEach(item => {
-                    const isIncome = item.amount >= 0;
-                    detailHtml += '<div class="flex justify-between items-center text-xs">';
-                    detailHtml += '<div><span class="text-gray-600">' + item.title + '</span>';
-                    detailHtml += '<span class="text-gray-400 ml-1">' + item.date.substring(5) + ' · ' + item.account + '</span>';
+                if (dzKlineMode === 'month') {
+                    // 月K模式下按周分组显示
+                    const weekMap = {};
+                    items.forEach(item => {
+                        const wk = getWeekKey(item.date);
+                        if (!weekMap[wk]) weekMap[wk] = { income: 0, expense: 0, items: [] };
+                        if (item.amount >= 0) weekMap[wk].income += item.amount;
+                        else weekMap[wk].expense += Math.abs(item.amount);
+                        weekMap[wk].items.push(item);
+                    });
+                    const weekKeys = Object.keys(weekMap).sort().reverse();
+                    detailHtml += '<div class="space-y-2">';
+                    weekKeys.forEach(wk => {
+                        const wp = weekMap[wk];
+                        const wNet = wp.income - wp.expense;
+                        detailHtml += '<div class="flex justify-between items-center text-xs mb-1">';
+                        detailHtml += '<span class="text-gray-500 font-medium">' + formatWeekRange(wk) + '</span>';
+                        detailHtml += '<span class="font-mono font-bold ' + (wNet >= 0 ? 'text-red-500' : 'text-green-600') + '">' + (wNet >= 0 ? '+' : '-') + formatMoney(Math.abs(wNet)) + '</span>';
+                        detailHtml += '</div>';
+                        detailHtml += '<div class="space-y-1 pl-2">';
+                        wp.items.forEach(item => {
+                            const isIncome = item.amount >= 0;
+                            detailHtml += '<div class="flex justify-between items-center text-[11px]">';
+                            detailHtml += '<div><span class="text-gray-600">' + item.title + '</span>';
+                            detailHtml += '<span class="text-gray-400 ml-1">' + item.date.substring(5) + ' · ' + item.account + '</span>';
+                            detailHtml += '</div>';
+                            detailHtml += '<span class="font-mono font-bold ' + (isIncome ? 'text-red-500' : 'text-green-600') + '">' + (isIncome ? '+' : '-') + formatMoney(Math.abs(item.amount)) + '</span>';
+                            detailHtml += '</div>';
+                        });
+                        detailHtml += '</div>';
+                    });
                     detailHtml += '</div>';
-                    detailHtml += '<span class="font-mono font-bold ' + (isIncome ? 'text-red-500' : 'text-green-600') + '">' + (isIncome ? '+' : '-') + formatMoney(Math.abs(item.amount)) + '</span>';
+                } else {
+                    detailHtml += '<div class="space-y-1">';
+                    items.forEach(item => {
+                        const isIncome = item.amount >= 0;
+                        detailHtml += '<div class="flex justify-between items-center text-xs">';
+                        detailHtml += '<div><span class="text-gray-600">' + item.title + '</span>';
+                        detailHtml += '<span class="text-gray-400 ml-1">' + item.date.substring(5) + ' · ' + item.account + '</span>';
+                        detailHtml += '</div>';
+                        detailHtml += '<span class="font-mono font-bold ' + (isIncome ? 'text-red-500' : 'text-green-600') + '">' + (isIncome ? '+' : '-') + formatMoney(Math.abs(item.amount)) + '</span>';
+                        detailHtml += '</div>';
+                    });
                     detailHtml += '</div>';
-                });
-                detailHtml += '</div>';
+                }
                 detailHtml += '</div>';
             });
             detailEl.innerHTML = detailHtml;
