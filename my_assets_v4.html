@@ -540,15 +540,15 @@ input.decimal-input { -moz-appearance: textfield; }
             </header>
             <!-- 筛选切换 -->
             <div class="flex gap-1 bg-gray-100 rounded-lg p-1 mb-2">
-                <button onclick="switchDzFilter('all')" id="dz-filter-all" class="flex-1 py-1.5 text-xs rounded-md bg-white shadow text-indigo-600 font-medium">全部</button>
-                <button onclick="switchDzFilter('线上')" id="dz-filter-线上" class="flex-1 py-1.5 text-xs rounded-md text-gray-400">线上</button>
+                <button onclick="switchDzFilter('all')" id="dz-filter-all" class="flex-1 py-1.5 text-xs rounded-md text-gray-400">全部</button>
+                <button onclick="switchDzFilter('线上')" id="dz-filter-线上" class="flex-1 py-1.5 text-xs rounded-md bg-white shadow text-indigo-600 font-medium">线上</button>
                 <button onclick="switchDzFilter('线下')" id="dz-filter-线下" class="flex-1 py-1.5 text-xs rounded-md text-gray-400">线下</button>
             </div>
             <!-- K线模式切换 -->
             <div class="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
                 <button onclick="switchDzKline('day')" id="dz-kline-day" class="flex-1 py-1.5 text-xs rounded-md text-gray-400">日K</button>
-                <button onclick="switchDzKline('week')" id="dz-kline-week" class="flex-1 py-1.5 text-xs rounded-md text-gray-400">周K</button>
-                <button onclick="switchDzKline('month')" id="dz-kline-month" class="flex-1 py-1.5 text-xs rounded-md bg-white shadow text-indigo-600 font-medium">月K</button>
+                <button onclick="switchDzKline('week')" id="dz-kline-week" class="flex-1 py-1.5 text-xs rounded-md bg-white shadow text-indigo-600 font-medium">周K</button>
+                <button onclick="switchDzKline('month')" id="dz-kline-month" class="flex-1 py-1.5 text-xs rounded-md text-gray-400">月K</button>
             </div>
             <div class="grid grid-cols-3 gap-2 mb-4">
                 <div class="bg-white rounded-xl p-2 shadow-sm text-center">
@@ -655,11 +655,11 @@ input.decimal-input { -moz-appearance: textfield; }
         let selectedSnapshots = [];
         let snapshotViewMode = 'data';
         let statsMode = 'month', statsOffset = 0, statsType = 'category';
-        let dzFilter = 'all';
+        let dzFilter = '线上';
         let statsCategoryDetail = null; // 当前展开详情的分类名
         let statsCategoryDetailType = null; // 'expense' | 'income'
         let statsCustomStart = '', statsCustomEnd = '';
-        let dzKlineMode = 'month'; // day | week | month
+        let dzKlineMode = 'week'; // day | week | month
 
         // ========== 工具函数 ==========
         function formatMoney(num) {
@@ -1851,6 +1851,12 @@ input.decimal-input { -moz-appearance: textfield; }
 
             html += '</div></div>';
             trendEl.innerHTML = html;
+
+            // Auto-scroll to right end (most recent data)
+            const chartWrap = trendEl.querySelector('.kline-chart-wrap');
+            if (chartWrap) {
+                chartWrap.scrollLeft = chartWrap.scrollWidth;
+            }
 
             // Render detail list below chart (reverse chronological)
             const detailEl = document.getElementById('dzDetailList');
