@@ -415,7 +415,7 @@ input.decimal-input { -moz-appearance: textfield; }
             <div id="log-card" class="bg-red-50 rounded-2xl p-5 mb-8 shadow-sm border border-red-200">
                 <div class="grid grid-cols-2 gap-3">
                     <div class="col-span-2">
-                        <input type="text" id="log_title" placeholder="事项说明" class="w-full bg-gray-50 rounded-xl px-4 py-3 outline-none text-sm border border-transparent focus:border-purple-300">
+                        <input type="text" id="log_title" placeholder="事项说明不能为空" class="w-full bg-gray-50 rounded-xl px-4 py-3 outline-none text-sm border border-transparent focus:border-purple-300">
                     </div>
                     <div class="col-span-2 flex gap-2">
                         <label class="flex-1 cursor-pointer">
@@ -1255,8 +1255,8 @@ input.decimal-input { -moz-appearance: textfield; }
                             ${groups[key].items.map(l => `
                                 <div class="swipe-item bg-gray-50 rounded-lg">
                                     <div class="swipe-actions">
-                                        <button class="swipe-btn edit" onclick="openEditModal(${l.id})" title="编辑">✎</button>
-                                        <button class="swipe-btn delete" onclick="deleteLog(${l.id})" title="删除">×</button>
+                                        <button class="swipe-btn edit" onclick="openEditModal(${l.id})" title="编辑">编辑</button>
+                                        <button class="swipe-btn delete" onclick="deleteLog(${l.id})" title="删除">删除</button>
                                     </div>
                                     <div class="swipe-content p-3 flex justify-between items-center" onclick="toggleSwipe(this)" onmousemove="dragSwipe(event, this)">
                                         <div><div class="text-sm font-medium text-gray-700">${l.title}</div><div class="text-[10px] text-gray-400">${l.date.substring(5)} · ${l.account}</div></div>
