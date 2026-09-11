@@ -276,7 +276,7 @@ input.decimal-input { -moz-appearance: textfield; }
         <button class="settings-menu-item" onclick="renderCloudHistory();closeSettingsMenu()">📋 云端历史</button>
         <div class="settings-menu-divider"></div>
         <button class="settings-menu-item danger" onclick="clearAllData();closeSettingsMenu()">🗑️ 清空所有数据</button>
-        <div class="settings-menu-version" id="settingsVersion">v0.36</div>
+        <div class="settings-menu-version" id="settingsVersion">v0.37</div>
     </div>
 
     <main class="pb-24">
@@ -538,30 +538,37 @@ input.decimal-input { -moz-appearance: textfield; }
                 <h1 class="text-2xl font-bold text-gray-800">德州战绩</h1>
                 <p class="text-xs text-gray-500">德州扑克出入账统计</p>
             </header>
+            <!-- 筛选切换 -->
+            <div class="flex gap-1 bg-gray-100 rounded-lg p-1 mb-2">
+                <button onclick="switchDzFilter('all')" id="dz-filter-all" class="flex-1 py-1.5 text-xs rounded-md bg-white shadow text-indigo-600 font-medium">全部</button>
+                <button onclick="switchDzFilter('线上')" id="dz-filter-线上" class="flex-1 py-1.5 text-xs rounded-md text-gray-400">线上</button>
+                <button onclick="switchDzFilter('线下')" id="dz-filter-线下" class="flex-1 py-1.5 text-xs rounded-md text-gray-400">线下</button>
+            </div>
             <!-- K线模式切换 -->
             <div class="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
-                <button onclick="switchDzKline('day')" id="dz-kline-day" class="flex-1 py-2 text-xs rounded-md text-gray-400">日K</button>
-                <button onclick="switchDzKline('week')" id="dz-kline-week" class="flex-1 py-2 text-xs rounded-md text-gray-400">周K</button>
-                <button onclick="switchDzKline('month')" id="dz-kline-month" class="flex-1 py-2 text-xs rounded-md bg-white shadow text-indigo-600 font-medium">月K</button>
+                <button onclick="switchDzKline('day')" id="dz-kline-day" class="flex-1 py-1.5 text-xs rounded-md text-gray-400">日K</button>
+                <button onclick="switchDzKline('week')" id="dz-kline-week" class="flex-1 py-1.5 text-xs rounded-md text-gray-400">周K</button>
+                <button onclick="switchDzKline('month')" id="dz-kline-month" class="flex-1 py-1.5 text-xs rounded-md bg-white shadow text-indigo-600 font-medium">月K</button>
             </div>
-            <div class="grid grid-cols-3 gap-3 mb-6">
-                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
-                    <div class="text-xs text-gray-400 mb-1">德州入账</div>
-                    <div id="dzIncome" class="text-lg font-bold text-green-600">0.00</div>
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <div class="bg-white rounded-xl p-2 shadow-sm text-center">
+                    <div class="text-[10px] text-gray-400 mb-0.5">德州入账</div>
+                    <div id="dzIncome" class="text-base font-bold text-green-600">0.00</div>
                 </div>
-                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
-                    <div class="text-xs text-gray-400 mb-1">德州出账</div>
-                    <div id="dzExpense" class="text-lg font-bold text-red-500">0.00</div>
+                <div class="bg-white rounded-xl p-2 shadow-sm text-center">
+                    <div class="text-[10px] text-gray-400 mb-0.5">德州出账</div>
+                    <div id="dzExpense" class="text-base font-bold text-red-500">0.00</div>
                 </div>
-                <div class="bg-white rounded-xl p-4 shadow-sm text-center">
-                    <div class="text-xs text-gray-400 mb-1">德州净盈亏</div>
-                    <div id="dzNet" class="text-lg font-bold text-indigo-600">0.00</div>
+                <div class="bg-white rounded-xl p-2 shadow-sm text-center">
+                    <div class="text-[10px] text-gray-400 mb-0.5">德州净盈亏</div>
+                    <div id="dzNet" class="text-base font-bold text-indigo-600">0.00</div>
                 </div>
             </div>
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-                <h3 class="text-sm font-bold text-gray-700 mb-3">各期趋势</h3>
+            <div class="bg-white rounded-xl p-3 shadow-sm mb-4">
+                <h3 class="text-sm font-bold text-gray-700 mb-2">各期趋势</h3>
                 <div id="dezhoUTrend" class="space-y-2"></div>
             </div>
+            <div id="dzDetailList" class="space-y-2"></div>
         </div>
     </main>
 
@@ -642,6 +649,8 @@ input.decimal-input { -moz-appearance: textfield; }
         let selectedSnapshots = [];
         let snapshotViewMode = 'data';
         let statsMode = 'month', statsOffset = 0, statsType = 'category';
+        let dzFilter = 'all';
+        let dzKlineMode = 'month';
         let statsCategoryDetail = null; // 当前展开详情的分类名
         let statsCategoryDetailType = null; // 'expense' | 'income'
         let statsCustomStart = '', statsCustomEnd = '';
@@ -1646,6 +1655,17 @@ input.decimal-input { -moz-appearance: textfield; }
             const parts=key.split('-'); return parts[0].slice(2)+'/'+parts[1]; // "26/05"
         }
 
+        function switchDzFilter(filter) {
+            dzFilter = filter;
+            ['all', '线上', '线下'].forEach(f => {
+                const id = f === 'all' ? 'dz-filter-all' : 'dz-filter-' + f;
+                document.getElementById(id).className = f === filter
+                    ? 'flex-1 py-1.5 text-xs rounded-md bg-white shadow text-indigo-600 font-medium'
+                    : 'flex-1 py-1.5 text-xs rounded-md text-gray-400';
+            });
+            renderDezhouSummary();
+        }
+
         function switchDzKline(mode) {
             dzKlineMode = mode;
             ['day','week','month'].forEach(m => {
@@ -1717,43 +1737,48 @@ input.decimal-input { -moz-appearance: textfield; }
         }
 
         function renderDezhouSummary() {
-            const logs = logData;
-            let dzIn = 0, dzOut = 0, dzWinCount = 0, dzLossCount = 0;
+            // Filter logs by dzFilter
+            let logs = logData.filter(item => {
+                const cat = item.category || '';
+                if (cat !== '德州入账' && cat !== '德州出账') return false;
+                if (dzFilter === 'all') return true;
+                return (item.dzMode || '线上') === dzFilter;
+            });
+            let dzIn = 0, dzOut = 0;
             logs.forEach(item => {
                 const cat = item.category || '';
-                if (cat === '德州入账') { dzIn += item.amount; dzWinCount++; }
-                if (cat === '德州出账') { dzOut += Math.abs(item.amount); dzLossCount++; }
+                if (cat === '德州入账') { dzIn += item.amount; }
+                if (cat === '德州出账') { dzOut += Math.abs(item.amount); }
             });
             document.getElementById('dzIncome').textContent = formatMoney(dzIn);
             document.getElementById('dzExpense').textContent = formatMoney(dzOut);
             const netAll = dzIn - dzOut;
             const netEl = document.getElementById('dzNet');
             netEl.textContent = (netAll >= 0 ? '+' : '') + formatMoney(netAll);
-            netEl.className = 'text-lg font-bold ' + (netAll >= 0 ? 'text-green-600' : 'text-red-500');
+            netEl.className = 'text-base font-bold ' + (netAll >= 0 ? 'text-green-600' : 'text-red-500');
 
             // Build period map — chronological order (oldest first for chart)
             const periodMap = {};
-            logData.forEach(item => {
-                const cat = item.category || '';
-                if (cat !== '德州入账' && cat !== '德州出账') return;
+            logs.forEach(item => {
                 if (!item.date) return;
                 const key = getDzPeriodKey(item.date);
-                if (!periodMap[key]) periodMap[key] = { key, income: 0, expense: 0, count: 0 };
+                if (!periodMap[key]) periodMap[key] = { key, income: 0, expense: 0, count: 0, items: [] };
                 if (item.amount >= 0) periodMap[key].income += item.amount;
                 else periodMap[key].expense += Math.abs(item.amount);
                 periodMap[key].count++;
+                periodMap[key].items.push(item);
             });
             const keys = Object.keys(periodMap).sort(); // chronological
             _dzPeriodKeys = keys;
             _dzPeriodMap = periodMap;
             const trendEl = document.getElementById('dezhoUTrend');
-            if (!keys.length) { trendEl.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">暂无德州记录</div>'; return; }
+            if (!keys.length) { trendEl.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">暂无德州记录</div>'; document.getElementById('dzDetailList').innerHTML = ''; return; }
 
             // Scale: max absolute net value, with 20% headroom
             const netValues = keys.map(k => periodMap[k].income - periodMap[k].expense);
             const maxAbs = Math.max(...netValues.map(Math.abs), 1);
-            const halfRange = maxAbs * 1.25; // total vertical range = halfRange above + below zero
-            const chartHeight = 180; // px
+            const halfRange = maxAbs * 1.25;
+            const chartHeight = 180;
             const pxPerUnit = chartHeight / (halfRange * 2);
 
             // Stats info bar
@@ -1772,7 +1797,7 @@ input.decimal-input { -moz-appearance: textfield; }
                 '<button class="kline-fs-btn" onclick="enterDzFullscreen()">⛶ 全屏</button>' +
                 '</div>';
 
-            const zeroPx = chartHeight / 2; // zero line is at 50%
+            const zeroPx = chartHeight / 2;
 
             html += '<div class="kline-chart-wrap">';
             html += '<div class="kline-chart">';
@@ -1784,19 +1809,16 @@ input.decimal-input { -moz-appearance: textfield; }
                 const label = getDzPeriodLabel(key);
                 const absVal = Math.abs(net);
                 const candleH = Math.max(2, absVal * pxPerUnit);
-                const wickH = Math.min(candleH * 0.3, 4); // small wick extension
+                const wickH = Math.min(candleH * 0.3, 4);
 
-                // Candle positioned absolutely from zero line
                 let candleTop, candleBottom, wickTop, wickBottom, wickLen;
                 if (isUp) {
-                    // Candle extends upward from zero line
                     candleBottom = zeroPx;
                     candleTop = zeroPx - candleH;
                     wickLen = wickH;
                     wickTop = Math.max(0, candleTop - wickLen);
                     wickBottom = candleTop;
                 } else {
-                    // Candle extends downward from zero line
                     candleTop = zeroPx;
                     candleBottom = zeroPx + candleH;
                     wickLen = wickH;
@@ -1806,29 +1828,54 @@ input.decimal-input { -moz-appearance: textfield; }
 
                 html += '<div class="kline-bar-group ' + (isUp ? 'kline-up' : 'kline-down') + '" data-key="' + key + '">';
                 html += '<div class="kline-candle-area" style="height:' + chartHeight + 'px">';
-                // Candle body
                 html += '<div class="kline-candle" style="top:' + candleTop + 'px;height:' + (candleBottom - candleTop) + 'px"></div>';
-                // Upper wick (from candle top upward)
                 if (isUp) {
                     html += '<div class="kline-wick" style="top:' + wickTop + 'px;height:' + (wickBottom - wickTop) + 'px"></div>';
                 } else {
                     html += '<div class="kline-wick" style="top:' + candleTop + 'px;height:2px"></div>';
                 }
-                // Lower wick (from candle bottom downward)
                 if (isUp) {
                     html += '<div class="kline-wick" style="top:' + candleBottom + 'px;height:2px"></div>';
                 } else {
                     html += '<div class="kline-wick" style="top:' + wickTop + 'px;height:' + (wickBottom - wickTop) + 'px"></div>';
                 }
-                html += '</div>'; // candle-area
-                // Label below
+                html += '</div>';
                 html += '<div class="kline-vol">' + (net >= 0 ? '+' : '') + formatMoney(net) + '</div>';
                 html += '<div class="kline-label">' + getDzCompactLabel(key) + '</div>';
-                html += '</div>'; // bar-group
+                html += '</div>';
             });
 
-            html += '</div></div>'; // chart + wrap
+            html += '</div></div>';
             trendEl.innerHTML = html;
+
+            // Render detail list below chart (reverse chronological)
+            const detailEl = document.getElementById('dzDetailList');
+            const reversedKeys = [...keys].reverse();
+            let detailHtml = '';
+            reversedKeys.forEach(key => {
+                const p = periodMap[key];
+                const label = getDzPeriodLabel(key);
+                const net = p.income - p.expense;
+                const items = p.items.sort((a, b) => String(b.date||'').localeCompare(String(a.date||'')));
+                detailHtml += '<div class="bg-white rounded-xl p-3 shadow-sm">';
+                detailHtml += '<div class="flex justify-between items-center mb-2">';
+                detailHtml += '<span class="text-sm font-bold text-gray-700">' + label + '</span>';
+                detailHtml += '<span class="text-sm font-bold ' + (net >= 0 ? 'text-green-600' : 'text-red-500') + '">' + (net >= 0 ? '+' : '') + formatMoney(net) + '</span>';
+                detailHtml += '</div>';
+                detailHtml += '<div class="space-y-1">';
+                items.forEach(item => {
+                    const isIncome = item.amount >= 0;
+                    detailHtml += '<div class="flex justify-between items-center text-xs">';
+                    detailHtml += '<div><span class="text-gray-600">' + item.title + '</span>';
+                    detailHtml += '<span class="text-gray-400 ml-1">' + item.date.substring(5) + ' · ' + item.account + '</span>';
+                    detailHtml += '</div>';
+                    detailHtml += '<span class="font-mono font-bold ' + (isIncome ? 'text-green-600' : 'text-red-500') + '">' + (isIncome ? '+' : '-') + formatMoney(Math.abs(item.amount)) + '</span>';
+                    detailHtml += '</div>';
+                });
+                detailHtml += '</div>';
+                detailHtml += '</div>';
+            });
+            detailEl.innerHTML = detailHtml;
         }
 
         function renderCatBreakdown(id, catMap, total, logs, type) {
