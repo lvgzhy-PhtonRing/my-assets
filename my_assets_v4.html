@@ -1891,7 +1891,11 @@ input.decimal-input { -moz-appearance: textfield; }
             el.innerHTML = entries.map(([cat, val]) => {
                 const pct = total > 0 ? (val / total * 100) : 0;
                 const barW = maxVal > 0 ? (val / maxVal * 100) : 0;
-                const filtered = logs.filter(item => (item.category || '其他') === cat);
+const filtered = logs.filter(item => {
+                    const matchCat = (item.category || '其他') === cat;
+                    if (!matchCat) return false;
+                    return isExpense ? item.amount < 0 : item.amount >= 0;
+                });
                 let detailHtml = '';
                 if (filtered.length) {
                     detailHtml = '<div class="mt-2 bg-gray-50 rounded-xl overflow-hidden border border-gray-200">' +
@@ -1901,7 +1905,7 @@ input.decimal-input { -moz-appearance: textfield; }
                         '<div class="cat-detail-item">' +
                         '<div><div class="font-medium text-gray-700">' + l.title + '</div>' +
                         '<div class="cat-detail-date">' + (l.date||'').substring(5) + ' · ' + l.account + '</div></div>' +
-                        '<span class="font-mono font-bold ' + (isExpense ? 'text-red-500' : 'text-green-600') + '">' +
+                        '<span class="font-mono font-bold ' + (isExpense ? 'text-green-600' : 'text-red-500') + '">' +
                         (isExpense ? '-' : '+') + formatMoney(Math.abs(l.amount)) + '</span></div>').join('') +
                         '</div>';
                 }
