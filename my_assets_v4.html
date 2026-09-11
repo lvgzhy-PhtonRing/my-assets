@@ -478,18 +478,19 @@ input.decimal-input { -moz-appearance: textfield; }
                 <p class="text-xs text-gray-500">按分类统计支出与收入</p>
             </header>
             <div class="bg-white rounded-2xl p-4 mb-4 shadow-sm">
-                <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center justify-center gap-2 mb-3">
+                    <button onclick="navigateStats(-1)" id="statsNavPrev" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 text-sm font-bold">‹</button>
+                    <span id="statsPeriod" class="text-sm font-bold text-gray-700 w-32 text-center"></span>
+                    <button onclick="navigateStats(1)" id="statsNavNext" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 text-sm font-bold">›</button>
+                </div>
+                <div class="flex items-center justify-center">
                     <div class="flex gap-1 bg-gray-100 rounded-lg p-1">
                         <button onclick="switchStatsView('month')" id="stats-view-month" class="px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium">按月</button>
+                        <button onclick="switchStatsView('90d')" id="stats-view-90d" class="px-3 py-1 text-xs rounded-md text-gray-400">90天</button>
                         <button onclick="switchStatsView('half')" id="stats-view-half" class="px-3 py-1 text-xs rounded-md text-gray-400">半年</button>
                         <button onclick="switchStatsView('year')" id="stats-view-year" class="px-3 py-1 text-xs rounded-md text-gray-400">本年</button>
                         <button onclick="switchStatsView('custom')" id="stats-view-custom" class="px-3 py-1 text-xs rounded-md text-gray-400">自定义</button>
                     </div>
-                </div>
-                <div class="flex items-center justify-center gap-2">
-                    <button onclick="navigateStats(-1)" id="statsNavPrev" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 text-sm font-bold">‹</button>
-                    <span id="statsPeriod" class="text-sm font-bold text-gray-700 w-32 text-center"></span>
-                    <button onclick="navigateStats(1)" id="statsNavNext" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 text-sm font-bold">›</button>
                 </div>
                 <!-- 自定义日期范围 -->
                 <div id="customDateRow" class="custom-date-row hidden">
@@ -1194,8 +1195,38 @@ input.decimal-input { -moz-appearance: textfield; }
             document.getElementById('edit_type_sel').value = type;
             updateEditCategorySelect(type);
             document.getElementById('edit_category').value = log.category || '其他';
+            // Set dzMode
+            const dzMode = log.dzMode || '线上';
+            document.querySelector(`input[name="edit_dz_mode"][value="${dzMode}"]`).checked = true;
+            updateEditDzModeStyle(dzMode);
+            onEditCategoryChange();
             document.getElementById('editModal').classList.add('open');
         }
+
+        function onEditCategoryChange() {
+            const cat = document.getElementById('edit_category').value;
+            const dzDiv = document.getElementById('editDzMode');
+            if (cat === '德州出账' || cat === '德州入账') {
+                dzDiv.classList.remove('hidden');
+            } else {
+                dzDiv.classList.add('hidden');
+            }
+        }
+
+        function updateEditDzModeStyle(mode) {
+            document.getElementById('edit-dz-线上').className = mode === '线上'
+                ? 'text-center py-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 text-sm font-medium'
+                : 'text-center py-2 rounded-xl bg-gray-50 text-gray-400 border border-gray-200 text-sm font-medium';
+            document.getElementById('edit-dz-线下').className = mode === '线下'
+                ? 'text-center py-2 rounded-xl bg-green-50 text-green-600 border border-green-200 text-sm font-medium'
+                : 'text-center py-2 rounded-xl bg-gray-50 text-gray-400 border border-gray-200 text-sm font-medium';
+        }
+
+        document.querySelectorAll('input[name="edit_dz_mode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                updateEditDzModeStyle(this.value);
+            });
+        });
 
         function updateEditCategorySelect(type) {
             const sel = document.getElementById('edit_category');
@@ -1232,6 +1263,12 @@ input.decimal-input { -moz-appearance: textfield; }
             log.account = document.getElementById('edit_account').value;
             log.type = type;
             log.category = document.getElementById('edit_category').value;
+            const cat = log.category;
+            if (cat === '德州出账' || cat === '德州入账') {
+                log.dzMode = document.querySelector('input[name="edit_dz_mode"]:checked').value;
+            } else {
+                log.dzMode = undefined;
+            }
             localStorage.setItem(KEY_LOGS, JSON.stringify(logData));
             closeEditModal();
             renderLedger();
@@ -1437,6 +1474,7 @@ input.decimal-input { -moz-appearance: textfield; }
         function switchStatsView(mode) {
             statsMode = mode; statsOffset = 0;
             document.getElementById('stats-view-month').className = mode === 'month' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
+            document.getElementById('stats-view-90d').className = mode === '90d' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
             document.getElementById('stats-view-half').className = mode === 'half' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
             document.getElementById('stats-view-year').className = mode === 'year' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
             document.getElementById('stats-view-custom').className = mode === 'custom' ? 'px-3 py-1 text-xs rounded-md bg-white shadow text-indigo-600 font-medium' : 'px-3 py-1 text-xs rounded-md text-gray-400';
@@ -2287,7 +2325,20 @@ function cloudLogoutFromModal() {
                 <option value="income">收入</option>
             </select>
             <label>分类</label>
-            <select id="edit_category"></select>
+            <select id="edit_category" onchange="onEditCategoryChange()"></select>
+            <div id="editDzMode" class="hidden">
+                <label>线上/线下</label>
+                <div class="flex gap-2">
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="edit_dz_mode" value="线上" checked class="hidden">
+                        <div id="edit-dz-线上" class="text-center py-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 text-sm font-medium">线上</div>
+                    </label>
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="edit_dz_mode" value="线下" class="hidden">
+                        <div id="edit-dz-线下" class="text-center py-2 rounded-xl bg-gray-50 text-gray-400 border border-gray-200 text-sm font-medium">线下</div>
+                    </label>
+                </div>
+            </div>
             <div class="edit-btn-row">
                 <button class="btn-cancel" onclick="closeEditModal()">取消</button>
                 <button class="btn-save" onclick="saveEditLog()">保存</button>
