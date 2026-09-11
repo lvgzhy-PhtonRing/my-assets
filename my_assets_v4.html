@@ -231,6 +231,36 @@ input.decimal-input { -moz-appearance: textfield; }
         }
         .cloud-history-item .cloud-type-badge.auto { background: #dbeafe; color: #2563eb; }
         .cloud-history-item .cloud-type-badge.manual { background: #fef3c7; color: #d97706; }
+
+        /* Swipe action */
+        .swipe-item {
+            position: relative; overflow: hidden;
+        }
+        .swipe-actions {
+            position: absolute; right: 0; top: 0; height: 100%;
+            display: flex; align-items: center; z-index: 0;
+        }
+        .swipe-btn {
+            width: 60px; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 16px; cursor: pointer;
+            border: none;
+        }
+        .swipe-btn.edit { background: #6366f1; }
+        .swipe-btn.delete { background: #ef4444; }
+        .swipe-content {
+            position: relative; z-index: 1;
+            transition: transform 0.2s;
+            background: #f9fafb;
+        }
+        .swipe-content.swiped { transform: translateX(-120px); }
+        .swipe-hint {
+            display: inline-flex; align-items: center;
+            background: #f3e8ff; color: #7c3aed;
+            padding: 2px 8px; border-radius: 12px;
+            font-size: 10px; font-weight: 500;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -417,7 +447,10 @@ input.decimal-input { -moz-appearance: textfield; }
                 </div>
             </div>
             <div class="flex justify-between items-center mb-4">
-                <span class="text-sm font-bold text-gray-600">收支记录</span>
+                <div class="flex items-center">
+                    <span class="text-sm font-bold text-gray-600">收支记录</span>
+                    <span class="swipe-hint">←左滑编辑</span>
+                </div>
                 <div class="flex gap-1 bg-gray-100 rounded-lg p-1">
                     <button onclick="switchView('month')" id="view-month" class="px-3 py-1 text-xs rounded-md bg-white shadow text-purple-600 font-medium">按月</button>
                     <button onclick="switchView('week')" id="view-week" class="px-3 py-1 text-xs rounded-md text-gray-400">按周</button>
@@ -1048,7 +1081,8 @@ input.decimal-input { -moz-appearance: textfield; }
             const amount = parseFloat(document.getElementById('log_amount').value) || 0;
             const type = document.querySelector('input[name="log_type"]:checked').value;
             const category = document.getElementById('log_category').value;
-            if (!title || amount === 0) return;
+            if (!title) { alert('⚠️ 请填写事项说明'); return; }
+            if (amount === 0) { alert('⚠️ 请填写金额'); return; }
             const finalAmount = type === 'income' ? amount : -amount;
             logData.unshift({ id: Date.now(), title, account, date, amount: finalAmount, type, category });
             localStorage.setItem(KEY_LOGS, JSON.stringify(logData));
@@ -1219,13 +1253,17 @@ input.decimal-input { -moz-appearance: textfield; }
                         </div>
                         <div class="group-content space-y-2 mt-2 pl-2">
                             ${groups[key].items.map(l => `
-                                <div class="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
-                                    <div><div class="text-sm font-medium text-gray-700">${l.title}</div><div class="text-[10px] text-gray-400">${l.date.substring(5)} · ${l.account}</div></div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-[10px] px-1.5 py-0.5 rounded-full ${getCategoryBadge(l.category)}">${l.category || '其他'}</span>
-                                        <span class="text-sm font-mono font-bold ${l.amount >= 0 ? 'text-green-600' : 'text-red-500'}">${l.amount > 0 ? '+' : ''}${formatMoney(l.amount)}</span>
-                                        <button onclick="openEditModal(${l.id})" class="edit-btn" title="编辑">✎</button>
-                                        <button onclick="deleteLog(${l.id})" class="text-gray-300 hover:text-red-400">×</button>
+                                <div class="swipe-item bg-gray-50 rounded-lg">
+                                    <div class="swipe-actions">
+                                        <button class="swipe-btn edit" onclick="openEditModal(${l.id})" title="编辑">✎</button>
+                                        <button class="swipe-btn delete" onclick="deleteLog(${l.id})" title="删除">×</button>
+                                    </div>
+                                    <div class="swipe-content p-3 flex justify-between items-center" onclick="toggleSwipe(this)" onmousemove="dragSwipe(event, this)">
+                                        <div><div class="text-sm font-medium text-gray-700">${l.title}</div><div class="text-[10px] text-gray-400">${l.date.substring(5)} · ${l.account}</div></div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-[10px] px-1.5 py-0.5 rounded-full ${getCategoryBadge(l.category)}">${l.category || '其他'}</span>
+                                            <span class="text-sm font-mono font-bold ${l.amount >= 0 ? 'text-green-600' : 'text-red-500'}">${l.amount > 0 ? '+' : ''}${formatMoney(l.amount)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             `).join('')}
@@ -1241,6 +1279,84 @@ input.decimal-input { -moz-appearance: textfield; }
             content.classList.toggle('collapsed');
             arrow.classList.toggle('rotate-180');
         }
+
+        let swipeItem = null;
+        let swipeStartX = 0;
+        let swipeStartY = 0;
+        let swipeCurrentX = 0;
+        let isDragging = false;
+
+        function toggleSwipe(el) {
+            const current = el.classList.contains('swiped');
+            document.querySelectorAll('.swipe-content.swiped').forEach(e => {
+                e.classList.remove('swiped');
+                e.style.transform = '';
+            });
+            if (!current) {
+                el.classList.add('swiped');
+            }
+        }
+
+        function dragSwipe(e, el) {
+            if (!isDragging) {
+                swipeItem = el;
+                swipeStartX = e.touches ? e.touches[0].clientX : e.clientX;
+                swipeStartY = e.touches ? e.touches[0].clientY : e.clientY;
+                isDragging = true;
+            }
+        }
+
+        document.addEventListener('touchmove', function(e) {
+            if (!isDragging || !swipeItem) return;
+            const x = e.touches[0].clientX;
+            const y = e.touches[0].clientY;
+            const dx = x - swipeStartX;
+            const dy = y - swipeStartY;
+            if (Math.abs(dx) > Math.abs(dy) && dx < 0) {
+                const offset = Math.max(-120, dx);
+                swipeItem.style.transform = 'translateX(' + offset + 'px)';
+                swipeCurrentX = offset;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', function(e) {
+            if (!isDragging || !swipeItem) return;
+            if (swipeCurrentX < -60) {
+                swipeItem.classList.add('swiped');
+                swipeItem.style.transform = '';
+            } else {
+                swipeItem.classList.remove('swiped');
+                swipeItem.style.transform = '';
+            }
+            swipeItem = null;
+            swipeCurrentX = 0;
+            isDragging = false;
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging || !swipeItem) return;
+            const x = e.clientX;
+            const dx = x - swipeStartX;
+            if (dx < 0) {
+                const offset = Math.max(-120, dx);
+                swipeItem.style.transform = 'translateX(' + offset + 'px)';
+                swipeCurrentX = offset;
+            }
+        });
+
+        document.addEventListener('mouseup', function(e) {
+            if (!isDragging || !swipeItem) return;
+            if (swipeCurrentX < -60) {
+                swipeItem.classList.add('swiped');
+                swipeItem.style.transform = '';
+            } else {
+                swipeItem.classList.remove('swiped');
+                swipeItem.style.transform = '';
+            }
+            swipeItem = null;
+            swipeCurrentX = 0;
+            isDragging = false;
+        });
 
         function switchView(mode) {
             viewMode = mode;
