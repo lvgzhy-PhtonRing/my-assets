@@ -1183,6 +1183,8 @@ input.decimal-input { -moz-appearance: textfield; }
         // ========== 编辑记录 ==========
         let editingLogId = null;
 
+        let editDzModeBound = false;
+
         function openEditModal(id) {
             const log = logData.find(l => l.id === id);
             if (!log) return;
@@ -1200,6 +1202,15 @@ input.decimal-input { -moz-appearance: textfield; }
             document.querySelector(`input[name="edit_dz_mode"][value="${dzMode}"]`).checked = true;
             updateEditDzModeStyle(dzMode);
             onEditCategoryChange();
+            // Bind dzMode events on first open
+            if (!editDzModeBound) {
+                document.querySelectorAll('input[name="edit_dz_mode"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        updateEditDzModeStyle(this.value);
+                    });
+                });
+                editDzModeBound = true;
+            }
             document.getElementById('editModal').classList.add('open');
         }
 
@@ -1221,14 +1232,6 @@ input.decimal-input { -moz-appearance: textfield; }
                 ? 'text-center py-2 rounded-xl bg-green-50 text-green-600 border border-green-200 text-sm font-medium'
                 : 'text-center py-2 rounded-xl bg-gray-50 text-gray-400 border border-gray-200 text-sm font-medium';
         }
-
-        setTimeout(function() {
-            document.querySelectorAll('input[name="edit_dz_mode"]').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    updateEditDzModeStyle(this.value);
-                });
-            });
-        }, 0);
 
         function updateEditCategorySelect(type) {
             const sel = document.getElementById('edit_category');
