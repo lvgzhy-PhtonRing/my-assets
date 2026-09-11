@@ -276,7 +276,7 @@ input.decimal-input { -moz-appearance: textfield; }
         <button class="settings-menu-item" onclick="renderCloudHistory();closeSettingsMenu()">📋 云端历史</button>
         <div class="settings-menu-divider"></div>
         <button class="settings-menu-item danger" onclick="clearAllData();closeSettingsMenu()">🗑️ 清空所有数据</button>
-        <div class="settings-menu-version" id="settingsVersion">v0.37</div>
+        <div class="settings-menu-version" id="settingsVersion">v0.38</div>
     </div>
 
     <main class="pb-24">
@@ -1692,6 +1692,22 @@ input.decimal-input { -moz-appearance: textfield; }
             body.innerHTML = trendEl.innerHTML;
             // 移除克隆内容中的全屏按钮（全屏层已有关闭按钮）
             body.querySelector('.kline-fs-btn')?.remove();
+            // 提取图表统计信息到header，与标题同行
+            const chartInfo = body.querySelector('.kline-chart-info');
+            const header = document.querySelector('.kline-fs-header');
+            if (chartInfo && header) {
+                const titleSpan = header.querySelector('.kline-fs-title');
+                const closeBtn = header.querySelector('.kline-fs-close');
+                // 创建中间区域放置统计信息
+                const infoWrap = document.createElement('div');
+                infoWrap.style.cssText = 'display:flex;align-items:center;gap:12px;flex:1;justify-content:center;flex-wrap:wrap;font-size:11px;color:#6b7280;';
+                infoWrap.innerHTML = chartInfo.innerHTML;
+                titleSpan.parentNode.insertBefore(infoWrap, closeBtn);
+                // 缩小标题字号
+                titleSpan.style.fontSize = '13px';
+                // 移除原位置的统计信息
+                chartInfo.remove();
+            }
             // 为每根K线添加详细文字（收入/支出/净盈亏）
             body.querySelectorAll('.kline-bar-group').forEach(el => {
                 const key = el.getAttribute('data-key');
@@ -1729,6 +1745,16 @@ input.decimal-input { -moz-appearance: textfield; }
         function exitDzFullscreen() {
             document.getElementById('klineFsOverlay').classList.remove('open');
             document.getElementById('klineFsBody').innerHTML = '';
+            // 清理header中动态添加的统计信息
+            const header = document.querySelector('.kline-fs-header');
+            if (header) {
+                const infoWrap = header.querySelector('div[style*="flex"]');
+                if (infoWrap && !infoWrap.classList.contains('kline-fs-title') && !infoWrap.classList.contains('kline-fs-close')) {
+                    infoWrap.remove();
+                }
+                const titleSpan = header.querySelector('.kline-fs-title');
+                if (titleSpan) titleSpan.style.fontSize = '';
+            }
             try {
                 if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
                 else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
