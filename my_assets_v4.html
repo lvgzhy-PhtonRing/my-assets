@@ -72,33 +72,33 @@ input.decimal-input { -moz-appearance: textfield; }
             display: flex; flex-direction: column; padding: 16px;
         }
         .kline-fs-body .kline-chart-wrap {
-            flex: 1; min-height: 300px;
+            flex: 1; min-height: 210px;
             overflow-y: visible; /* 避免横屏时标签被裁切 */
         }
-        .kline-fs-body .kline-chart { height: 350px; }
-        .kline-fs-body .kline-candle { width: 12px; }
-        .kline-fs-body .kline-wick { width: 2px; }
-        .kline-fs-body .kline-bar-group { width: 48px; }
+        .kline-fs-body .kline-chart { height: 245px; }
+        .kline-fs-body .kline-candle { width: 8px; }
+        .kline-fs-body .kline-wick { width: 1px; }
+        .kline-fs-body .kline-bar-group { width: 34px; }
         .kline-fs-body .kline-label {
-            font-size: 10px; max-width: 64px;
+            font-size: 7px; max-width: 45px;
             white-space: nowrap; overflow: visible; text-overflow: clip;
         }
         .kline-fs-body .kline-vol {
-            font-size: 10px; max-width: 64px; font-weight: 600;
+            font-size: 7px; max-width: 45px; font-weight: 600;
             white-space: nowrap; overflow: visible; text-overflow: clip;
         }
-        .kline-fs-body .kline-chart-info { font-size: 13px; padding: 12px 16px; }
+        .kline-fs-body .kline-chart-info { font-size: 9px; padding: 8px 10px; }
         .kline-fs-body .kline-detail {
             display: flex; flex-direction: column; align-items: center;
             gap: 1px; margin-top: 2px; width: 100%;
         }
         .kline-fs-body .kline-detail-income {
-            font-size: 8px; color: #ef4444; line-height: 1.2;
-            white-space: nowrap; overflow: visible; text-overflow: clip; max-width: 64px;
+            font-size: 6px; color: #ef4444; line-height: 1.2;
+            white-space: nowrap; overflow: visible; text-overflow: clip; max-width: 45px;
         }
         .kline-fs-body .kline-detail-expense {
-            font-size: 8px; color: #22c55e; line-height: 1.2;
-            white-space: nowrap; overflow: visible; text-overflow: clip; max-width: 64px;
+            font-size: 6px; color: #22c55e; line-height: 1.2;
+            white-space: nowrap; overflow: visible; text-overflow: clip; max-width: 45px;
         }
         /* ===== 横屏模式优化（手机全屏变横版） ===== */
         @media (orientation: landscape) {
@@ -276,7 +276,7 @@ input.decimal-input { -moz-appearance: textfield; }
         <button class="settings-menu-item" onclick="renderCloudHistory();closeSettingsMenu()">📋 云端历史</button>
         <div class="settings-menu-divider"></div>
         <button class="settings-menu-item danger" onclick="clearAllData();closeSettingsMenu()">🗑️ 清空所有数据</button>
-        <div class="settings-menu-version" id="settingsVersion">v0.38</div>
+        <div class="settings-menu-version" id="settingsVersion">v0.39</div>
     </div>
 
     <main class="pb-24">
