@@ -402,7 +402,7 @@ input.decimal-input { -moz-appearance: textfield; }
         <div id="page-ledger" class="p-4 hidden animate-slide">
             <header class="mb-6">
                 <h1 class="text-2xl font-bold text-gray-800">收支账本</h1>
-                <p class="text-xs text-gray-500">实际出入帐记录</p>
+                <p class="text-xs text-gray-500">账面出入账记录</p>
             </header>
             <div class="bg-purple-900 rounded-2xl p-6 mb-6 text-white shadow-xl">
                 <div class="text-purple-400 text-sm mb-1 font-medium">账面资产总数 (元)</div>
@@ -616,7 +616,7 @@ input.decimal-input { -moz-appearance: textfield; }
         </button>
         <button onclick="switchTab('ledger')" id="tab-ledger" class="flex flex-col items-center text-gray-300">
             <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-            <span class="text-[10px] font-bold">收支记事</span>
+            <span class="text-[10px] font-bold">账目流水</span>
         </button>
         <button onclick="switchTab('stats')" id="tab-stats" class="flex flex-col items-center text-gray-300">
             <svg class="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M3 14l4-4 4 4 6-6 4 4V4H3v10zm-2 4h22v2H1v-2z"/></svg>
@@ -1313,16 +1313,27 @@ input.decimal-input { -moz-appearance: textfield; }
                 groups[key].total += item.amount;
             });
             const sorted = Object.keys(groups).sort().reverse();
+            const now = new Date();
+            const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
             container.innerHTML = sorted.map(key => {
                 const label = viewMode === 'month' ? key.replace('-','年') + '月' : formatWeekRange(key);
                 const income = groups[key].income;
                 const expense = groups[key].expense;
                 const total = groups[key].total;
+                // Check if group is older than 6 months
+                let groupDate;
+                if (viewMode === 'month') {
+                    const parts = key.split('-');
+                    groupDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1);
+                } else {
+                    groupDate = new Date(key);
+                }
+                const isOld = groupDate < sixMonthsAgo;
                 return `
                     <div class="group-item">
                         <div class="group-header bg-white rounded-xl p-3 shadow-sm flex justify-between items-center" onclick="toggleGroup(this)">
                             <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                <svg class="w-4 h-4 text-gray-400 transform transition-transform${isOld ? ' rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                                 <span class="font-bold text-gray-700">${label}</span>
                             </div>
                             <div class="flex items-center gap-3 text-xs">
@@ -1331,7 +1342,7 @@ input.decimal-input { -moz-appearance: textfield; }
                                 <span class="${total >= 0 ? 'text-green-600' : 'text-red-500'} font-bold">${total >= 0 ? '+' : ''}${formatMoney(total)}</span>
                             </div>
                         </div>
-                        <div class="group-content space-y-2 mt-2 pl-2">
+                        <div class="group-content space-y-2 mt-2 pl-2${isOld ? ' collapsed' : ''}">
                             ${groups[key].items.map(l => `
                                 <div class="swipe-item bg-gray-50 rounded-lg">
                                     <div class="swipe-actions">
